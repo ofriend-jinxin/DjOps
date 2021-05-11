@@ -1,0 +1,101 @@
+{% extends 'index.html' %}
+{% block content %}
+
+    <div id="myTabContent" class="tab-content">
+        <div class="tab-pane active in" id="home">
+            <form class="form" method="post">
+                <table>
+                    <tbody>
+
+                    <tr>
+                        <th><label for="id_num">ID:</label></th>
+                        <td><input id="id_num" maxlength="100" name="id_num" type="text" value="{{ osinfo.id }}"></td>
+
+                        <th><label for="vlan">网段:</label></th>
+                        <td style="float:left">
+                            <select id="vlan" name="vlan">
+                                {% for vlan in vlaninfo %}
+                                    {% if  vlan.id == osinfo.os_vlan %}
+                                        <option selected='selected' value="{{ vlan.id }}">{{ vlan.vlan_net }}</option>
+                                    {% else %}
+                                        <option value="{{ vlan.id }}">{{ vlan.vlan_net }}</option>
+                                    {% endif %}
+                                {% endfor %}
+
+                            </select>
+                        </td>
+                    </tr>
+
+
+                    <tr>
+                        <th><label for="id">IP:</label></th>
+                        <td><input id="ip" maxlength="100" name="ip" type="text" value="{{ osinfo.ip }}"></td>
+
+                        <th><label for="Mac">Mac:</label></th>
+                        <td><input id="mac" maxlength="100" name="mac" type="text" value="{{ osinfo.mac }}"></td>
+                    </tr>
+
+                    <tr>
+                        <th><label for="disk">硬盘（G）:</label></th>
+                        <td><input id="disk" min="0" name="disk" type="number" value="{{ osinfo.disk }}"></td>
+
+                        <th><label for="id_package">内存（M）:</label></th>
+                        <td>
+                            <input id="mem" maxlength="100" name="mem" type="number" value="{{ osinfo.mem }}"></td>
+                    </tr>
+
+                    <tr>
+                        <th><label for="vcpu">CPU（v）:</label></th>
+                        <td><input id="vcpu" min="0" name="vcpu" type="number" value="{{ osinfo.vcpu }}"></td>
+
+                        <th><label for="cpu">CPU型号:</label></th>
+                        <td><input id="cpu" maxlength="100" name="cpu" type="text" value="{{ osinfo.cpu }}"></td>
+                    </tr>
+
+                    <tr>
+                        <th><label for="sn">sn:</label></th>
+                        <td><input id="sn" min="0" name="sn" type="type" value="{{ osinfo.sn }}"></td>
+
+                        <th><label for="kernel">kernel版本:</label></th>
+                        <td><input id="kernel" maxlength="100" name="kernel" type="text" value="{{ osinfo.kernel }}">
+                        </td>
+
+
+                    </tr>
+
+
+                    <tr>
+                        <th>
+                            <label for="notes">备注:</label>
+                        </th>
+                        <td>
+                            <textarea cols="40" id="notes" maxlength="4000" name="notes"
+                                      rows="5">{{ osinfo.notes }}</textarea>
+                        </td>
+
+                        <th><label for="group">所属组: </label></th>
+                        <td>
+                            <select style="float:left" id="group" size='5' class="select-xlarge" multiple="multiple"
+                                    name="group">
+                                {% for group in groupinfo %}
+                                    {% if  group.name == os_group %}
+                                        <option selected='selected'
+                                                value="{{ group.id }}">{{ group.name }}</option>
+                                    {% else %}
+                                        <option value="{{ group.id }}">{{ group.name }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+
+                        </td>
+                    </tr>
+                    <th>
+                        <input type='submit' class="btn btn-success" type="button" value="提交修改">
+                    </th>
+                    </tbody>
+                </table>
+            </form>
+        </div>
+    </div>
+{% endblock content %}
+

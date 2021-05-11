@@ -1,0 +1,20 @@
+<div class="header">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="float-right">
+                    <div class="dropdown dib">
+                        <div class="header-icon">
+                                <span class="user-avatar">
+		                     {% if request.user.is_authenticated %}
+                                    <span>{{user}}</span>
+                                    {% endif %}
+                                </span>
+                            </div >
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

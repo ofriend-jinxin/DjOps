@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block content %}
+<section id="main-content">
+	<div class="row">
+		{% for group,osinfo in allinfo.items%}
+			<div class="col-lg-6">
+				<div class="card">
+					<div class="card-title">
+						<h4 class="float-left">{{ group }}</h4>
+                                                   {% if group != "未分组" %}
+						   <a class="float-right badge badge-primary " href="/groupupdate?name={{ group }}"><span>更新本组</span></a>
+                                                   {% endif %}
+{#						   <a class="float-right badge badge-danger" href="/groupdelete?name={{ group }}"><span>删除本组</span></a> #}
+					</div>
+					<div class="card-body">
+						<div class="table-responsive">
+							<table class="table">
+								<thead>
+									<tr>
+										<th>#</th>
+										<th>IP</th>
+										<th>主机名</th>
+										<th>更新日期</th>
+										<th>操作</th>
+									</tr>
+								</thead>
+								<tbody>
+                                                                {% for tag in osinfo%}
+									<tr>
+										<th scope="row">{{forloop.counter}}</th>
+										<td>{{ tag.os_ip }}</td>
+										<td>{{ tag.os_hostname|default:'N/A' }}</td>
+										<td>{{ tag.os_mtime|default:'N/A' }}</td>
+										<td>
+											<a  class="color-primary" href="/resinfo/?osid={{ tag.id }}">详情</a>
+											<a  class="color-success" href="/hostupdate?ip={{ tag.os_ip }}">更新本机</a>
+                                                   {% if group != "未分组" %}
+											<a  class="color-danger" href="/groupdelete?ip={{ tag.os_ip }}&group={{ group }}">从本组移除</a>
+                                                   {% endif %}
+										</td>
+									</tr>
+                                                                {% endfor %}
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			</div>
+			{% endfor %}
+		<!-- /# column -->
+	
+	</div>
+	<!-- /# row -->
+</section>
+{% endblock content %}
+

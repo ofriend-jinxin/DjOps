@@ -1,0 +1,52 @@
+<head>
+    {% load static %}
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <!-- Styles -->
+    <link href="{% static 'assets/css/lib/calendar2/pignose.calendar.min.css' %}" rel="stylesheet">
+    <link href="{% static 'assets/css/lib/font-awesome.min.css' %}" rel="stylesheet">
+    <link href="{% static 'assets/css/lib/themify-icons.css' %}" rel="stylesheet">
+    <link href="{% static 'assets/css/lib/owl.carousel.min.css' %}" rel="stylesheet">
+    <link href="{% static 'assets/css/lib/owl.theme.default.min.css' %}" rel="stylesheet">
+    <link href="{% static 'assets/css/lib/menubar/sidebar.css' %}" rel="stylesheet">
+    <link href="{% static 'assets/css/lib/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'assets/css/lib/helper.css' %}" rel="stylesheet">
+    <link href="{% static 'assets/css/style.css' %}" rel="stylesheet">
+    <style type="text/css">.jqstooltip {
+        position: absolute;
+        left: 0px;
+        top: 0px;
+        visibility: hidden;
+        background: rgb(0, 0, 0) transparent;
+        background-color: rgba(0, 0, 0, 0.6);
+        filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#99000000, endColorstr=#99000000);
+        -ms-filter: "progid:DXImageTransform.Microsoft.gradient(startColorstr=#99000000, endColorstr=#99000000)";
+        color: white;
+        font: 10px arial, san serif;
+        text-align: left;
+        white-space: nowrap;
+        padding: 5px;
+        border: 1px solid white;
+        z-index: 10000;
+    }
+
+    .jqsfield {
+        color: white;
+        font: 10px arial, san serif;
+        text-align: left;
+    }</style>
+
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+    <script src="https://cdn.bootcss.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+    <script src="https://cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <title>{{ thepage.h1 }}</title>
+</head>

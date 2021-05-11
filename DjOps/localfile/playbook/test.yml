@@ -1,0 +1,4 @@
+ - hosts: all
+   tasks:
+     - name: whoami and hostname
+       shell: whoami;hostname

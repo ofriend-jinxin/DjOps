@@ -1,0 +1,228 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="demoTable">
+        搜索IP：
+        <div class="layui-inline">
+            <input class="layui-input" name="id" id="demoReload" autocomplete="off">
+        </div>
+        <button class="layui-btn" data-type="reload">搜索</button>
+    </div>
+
+
+    <table class="layui-hide" id="test" lay-filter="test"></table>
+
+    <script type="text/html" id="toolbarDemo">
+        <div class="layui-btn-container">
+
+            <button class="layui-btn layui-btn-sm" lay-event="update">批量更新</button>
+            <button class="layui-btn layui-btn-sm" lay-event="isAll">验证是否全选</button>
+            <button class="layui-btn layui-btn-sm" lay-event="shell">执行命令</button>
+            <button class="layui-btn layui-btn-sm" lay-event="script">执行脚本</button>
+            <button class="layui-btn layui-btn-sm" lay-event="playbook">playbook</button>
+        </div>
+    </script>
+
+    <script type="text/html" id="barDemo">
+        <a class="layui-btn layui-btn-xs" lay-event="update">更新</a>
+        <a class="layui-btn layui-btn-danger layui-btn-xs" data-method="delete" lay-event="del">删除</a>
+    </script>
+    <script>
+
+        layui.use('table', function () {
+            var table = layui.table;
+
+            table.render({
+                elem: '#test'
+                , url: '/api/hosts/'
+                , toolbar: '#toolbarDemo' //开启头部工具栏，并为其绑定左侧模板
+
+                , defaultToolbar: ['filter', 'exports', 'print', { //自定义头部工具栏右侧图标。如无需自定义，去除该参数即可
+                    title: '提示'
+                    , layEvent: 'LAYTABLE_TIPS'
+                    , icon: 'layui-icon-tips'
+                }]
+                , cols: [[
+                    {type: 'checkbox', fixed: 'left', id: 'goodsLimitSeqNo'}
+                    , {field: 'id', title: 'ID', fixed: 'left', unresize: true, sort: true, width: 70,event}
+                    , {field: 'ip', title: 'IP', width: 140, sort: true}
+                    , {field: 'hostname', title: '主机名', width: 140, sort: true}
+                    , {
+                        field: 'app', title: '应用', width: 100, sort: true, templet: function (res) {
+                            return '<em>' + res.app.name + '</em>'
+                        }
+                    }
+                    , {
+                        field: 'vlan', title: '环境', width: 100, sort: true, templet: function (res) {
+                            return '<em>' + res.vlan.vlan_area + '</em>'
+                        }
+                    }
+                    , {
+                        field: 'cabinet', title: '机房', width: 100, sort: true, hide: true, templet: function (res) {
+                            return '<em>' + res.cabinet.idc.name + '</em>'
+                        }
+                    }
+                    , {
+                        field: 'cabinet', title: '机柜', width: 100, sort: true, hide: true, templet: function (res) {
+                            return '<em>' + res.cabinet.name + '</em>'
+                        }
+                    }
+                    , {field: 'u', title: 'U位', sort: true, width: 70,}
+                    , {field: 'cpu', title: 'cpu型号', sort: true, hide: true}
+                    , {field: 'vcpu', title: 'cpu', sort: true, width: 70,}
+                    , {field: 'mem', title: '内存M', sort: true, width: 100,}
+                    , {field: 'disk', title: '硬盘G', sort: true, width: 100,}
+                    , {field: 'notes', title: '备注信息', sort: true, hide: true}
+                    , {field: 'kernel', title: '内核版本', sort: true, hide: true}
+                    , {field: 'system', title: '系统版本', sort: true, width: 120}
+                    , {field: 'exceedtime', title: '到期时间', sort: true, width: 200,},
+                    , {fixed: 'right', title: '操作', toolbar: '#barDemo',}
+                ]]
+                , page: true
+                , id: 'tabReload'
+            });
+            //头工具栏事件
+
+            table.on('toolbar(test)', function (obj) {
+                var checkStatus = table.checkStatus(obj.config.id);
+                switch (obj.event) {
+                    case 'shell' :
+                    case 'script' :
+                    case 'playbook':
+                        console.log(obj.event)
+                        var iplist = ''
+                        var data = checkStatus.data;
+                        for (var item in data) {
+                            iplist += data[item].ip + ",";
+                        }
+                        if (data.length != 0) {
+                            var url = '/shell?ip=' + iplist + "&type=" + obj.event
+                            layer.open({
+                                type: 2,
+                                title: "执行" + obj.event,
+                                shadeClose: true,
+                                maxmin: true,
+                                area: ['90%', '90%'],
+                                content: [url, 'on'],
+                                btn: ['关闭'],
+                            })
+
+                        } else {
+                            layer.msg('未选中任何主机');
+                        }
+                        break;
+                    case 'update':
+                        var iplist = ''
+                        var data = checkStatus.data;
+                        for (var item in data) {
+                            iplist += data[item].ip + ",";
+                        }
+                        //layer.alert(JSON.stringify(iplist));
+                        if (data.length != 0) {
+                            var url = '/hostupdate/?ip=' + iplist
+                            layer.open({
+                                type: 2,
+                                title: "更新主机",
+                                shadeClose: true,
+                                maxmin: true,
+                                area: ['90%', '90%'],
+                                content: [url, 'on'],
+                                btn: ['关闭'],
+                            })
+
+                        } else {
+                            layer.msg('未选中任何主机');
+                        }
+                        break;
+                    case
+                    'getCheckLength'
+                    :
+                        var data = checkStatus.data;
+                        layer.msg('选中了：' + data.length + ' 个');
+                        break;
+
+                    //自定义头工具栏右侧图标 - 提示
+                    case
+                    'LAYTABLE_TIPS'
+                    :
+                        layer.alert('这是工具栏右侧自定义的一个图标按钮');
+                        break;
+                    case 'isAll':
+                        layer.msg(checkStatus.isAll ? '全选' : '未全选');
+                        break;
+                }
+
+            })
+            ;
+            //监听行单击事件（双击事件为：rowDouble）
+            table.on('row(test)', function (obj) {
+                var data = obj.data;
+                console.log(obj.event)
+
+            });
+
+
+            //监听行工具事件
+            table.on('tool(test)', function (obj) {
+
+                var data = obj.data;
+                if (obj.event == 'del') {
+                    var url = '/hostdel?ip=' + data.ip
+                    boxmsg = "确认删除"
+                } else if (obj.event == 'update') {
+                    var url = '/hostupdate/?ip=' + data.ip
+                    boxmsg = "确认更新"
+
+                }
+                layer.confirm(boxmsg, {
+                    btn: ['确认', '取消']
+                }, function () {
+                    // 按钮1的事件
+                    layer.msg("确认操作，请耐心等待");
+                    $.ajax({
+                        type: "get",
+                        url: url,
+                        async: false,
+                        success: function (resdata) {
+                            if (resdata.code == 0) {
+                                layer.msg(resdata.msg, {icon: 1});
+                                console.log(resdata.log);
+                                window.setTimeout("javascript:location.href='/allinfo/'", 1500);
+                            } else {
+                                layer.msg(resdata.msg, {icon: 2});
+                                console.log(resdata.log);
+                            }
+                        }
+                    });
+                }, function (index) {
+                    // 按钮2的事件
+                    layer.close(index);
+                });
+
+            });
+
+            var $ = layui.$, active = {
+                reload: function () {
+                    var demoReload = $('#demoReload');
+
+                    table.reload('tabReload', {
+                        page: {
+                            curr: 1
+                        }
+                        , where: {
+                            ip: demoReload.val()
+
+                        }
+                    });
+                }
+            };
+
+            $('.demoTable .layui-btn').on('click', function () {
+                var type = $(this).data('type');
+                active[type] ? active[type].call(this) : '';
+            });
+        })
+        ;
+    </script>
+
+{% endblock content %}
+
