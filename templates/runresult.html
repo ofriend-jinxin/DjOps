@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="demoTable">
+        搜索ip：
+        <div class="layui-inline">
+            <input class="layui-input" name="id" id="demoReload" autocomplete="off">
+        </div>
+        <button class="layui-btn" data-type="reload">搜索</button>
+    </div>
+    <script type="text/html" id="toolbarDemo">
+        <div class="layui-btn-container">
+
+            <button class="layui-btn layui-btn-sm" lay-event="delete">批量删除</button>
+
+        </div>
+    </script>
+
+    <table class="layui-hide" id="test" lay-filter="test"></table>
+
+
+    <script type="text/html" id="barDemo">
+        <a class="layui-btn layui-btn-xs" data-method="open" lay-event="open">查看结果</a>
+        <a class="layui-btn layui-btn-xs" data-method="rerun" lay-event="rerun">重新执行</a>
+    </script>
+    <script>
+
+        layui.use('table', function () {
+            var table = layui.table;
+
+            table.render({
+                elem: '#test'
+                , url: '/api/results/'
+                , toolbar: '#toolbarDemo' //开启头部工具栏，并为其绑定左侧模板
+
+                , defaultToolbar: ['filter', 'exports', 'print', { //自定义头部工具栏右侧图标。如无需自定义，去除该参数即可
+                    title: '提示'
+                    , layEvent: 'LAYTABLE_TIPS'
+                    , icon: 'layui-icon-tips'
+                }]
+                , cols: [[
+                    {type: 'checkbox', fixed: 'left', sort: true, id: 'goodsLimitSeqNo'}
+                    , {field: 'id', title: 'id', fixed: 'left', unresize: true, width: 60}
+                    , {field: 'iplist', title: 'IP', width: 300, sort: true}
+                    , {field: 'ctype', title: '任务类型', width: 110, sort: true}
+                    , {field: 'args', title: '任务参数', sort: true, width: 200,}
+                    , {field: 'is_sudo', title: 'sudo', sort: true, width: 100,}
+                    , {field: 'ctime', title: '任务更新时间', sort: true, width: 200,}
+                    , {field: 'result_txt', title: '任务结果', sort: true, width: 300,}
+                    , {fixed: 'right', title: '操作', toolbar: '#barDemo', width: 200}
+                ]]
+                , initSort: {
+                    field: 'ctime',
+                    type: 'desc'
+                }
+                , page: true
+                , id: 'tabReload'
+            });
+            //头工具栏事件
+
+            //监听行单击事件（双击事件为：rowDouble）
+            table.on('row(test)', function (obj) {
+                var data = obj.data;
+                console.log(obj.event)
+
+            });
+
+            //监听行工具事件
+            table.on('tool(test)', function (obj) {
+                    var data = obj.data;
+                    if (obj.event == 'open') {
+                        var url = '/openresult/?id=' + data.id
+                        layer.open({
+                            type: 2,
+                            title: "执行结果",
+                            shadeClose: true,
+                            maxmin: true,
+                            area: ['90%', '90%'],
+                            content: [url, 'on'],
+                            btn: ['关闭'],
+                        })
+
+                    } else if (obj.event == 'rerun') {
+                        var boxmsg = '重新执行'
+                        var url = "/rerun/?id=" + data.id
+                        layer.confirm(boxmsg, {
+                            btn: ['确认', '取消']
+                        }, function () {
+                            // 按钮1的事件
+                            layer.msg("确认操作，请耐心等待");
+                            $.ajax({
+                                type: "get",
+                                url: url,
+                                async: false,
+                                success: function (resdata) {
+                                    if (resdata.code == 0) {
+                                        layer.msg(resdata.msg, {icon: 1});
+                                        console.log(resdata.log);
+                                        window.setTimeout("javascript:location.href='/runresult/'", 1000);
+                                    } else {
+                                        layer.msg(resdata.msg, {icon: 2});
+                                        console.log(resdata.log);
+                                    }
+                                }
+                            });
+                        }, function (index) {
+                            // 按钮2的事件
+                            layer.close(index);
+                        });
+                    }
+
+                }
+            );
+
+            var $ = layui.$, active = {
+                reload: function () {
+                    var demoReload = $('#demoReload');
+
+                    table.reload('tabReload', {
+                        page: {
+                            curr: 1
+                        }
+                        , where: {
+                            ip: demoReload.val()
+
+                        }
+                    });
+                }
+            };
+            table.on('toolbar(test)', function (obj) {
+                var checkStatus = table.checkStatus(obj.config.id);
+                var data = checkStatus.data;
+                var idlist = ''
+                for (var item in data) {
+                    idlist += data[item].id + ",";
+                }
+                switch (obj.event) {
+                    case 'delete':
+                        if (data.length != 0) {
+                            var boxmsg = '确认删除'
+                            var url = "/runresult/?delid=" + idlist
+                            layer.confirm(boxmsg, {
+                                btn: ['确认', '取消']
+                            }, function () {
+                                // 按钮1的事件
+                                layer.msg("确认操作，请耐心等待");
+                                $.ajax({
+                                    type: "get",
+                                    url: url,
+                                    async: false,
+                                    success: function (resdata) {
+                                        if (resdata.code == 0) {
+                                            layer.msg(resdata.msg, {icon: 1});
+                                            console.log(resdata.log);
+                                            window.setTimeout("javascript:location.href='/runresult/'", 1000);
+                                        } else {
+                                            layer.msg(resdata.msg, {icon: 2});
+                                            console.log(resdata.log);
+                                        }
+                                    }
+                                });
+                            }, function (index) {
+                                // 按钮2的事件
+                                layer.close(index);
+                            });
+                        } else {
+                            layer.msg('未选中任何主机');
+                        }
+                        break;
+                    //自定义头工具栏右侧图标 - 提示
+                    case
+                    'LAYTABLE_TIPS'
+                    :
+                        layer.alert('这是工具栏右侧自定义的一个图标按钮');
+                }
+
+            })
+            ;$('.demoTable .layui-btn').on('click', function () {
+                var type = $(this).data('type');
+                active[type] ? active[type].call(this) : '';
+            });
+        })
+        ;
+    </script>
+
+{% endblock content %}
+

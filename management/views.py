@@ -5,8 +5,8 @@ from .models import *
 from django.forms.models import model_to_dict
 from django.contrib.auth.models import auth
 from django.contrib.auth.decorators import login_required
+import json,ast
 
-from management.Ansible2 import *
 from DjOps.tools.Scan import Scan
 from rest_framework.viewsets import ViewSet
 
@@ -18,14 +18,12 @@ import os
 from django.views.decorators.clickjacking import xframe_options_exempt
 
 from DjOps import settings
+from celery_tasks.tasks import RunAnsible
 
-ssh_info = settings.SSH_INFO
-ssh_user = ssh_info['SSH_USER']
-ssh_port = ssh_info['SSH_PORT']
-ssh_pass = ssh_info['SSH_PASS']
 
 from rest_framework.pagination import PageNumberPagination
-
+import logging
+logger = logging.getLogger('django')
 
 # Create your views here.
 def is_super_user(func):
@@ -91,30 +89,6 @@ def pagination_response(query_set, request, serializer):
     return pagination.get_paginated_response(data)
 
 
-def RunAnsible(ip, _module='ping', _args=None, _become=None, _type='model'):
-    iplist = ip
-    try:
-        iplist.remove('')
-    except Exception as e:
-        print(e)
-    print(iplist, _module, _args, _become, _type)
-    ans = MyAnsiable(iplist=iplist, remote_user=ssh_user, become=_become, remote_password={"conn_pass": ssh_pass},
-                     port=ssh_port)
-    if _type == 'model':
-        if _module != 'setup':
-            ans.run(module=_module, args=_args)
-        else:
-            ans.run(module=_module)
-    elif _type == 'playbook':
-        ans.playbook(playbooks=_args)
-    return_dic = ans.get_result()
-
-    restr = ("success:{} failed:{} unreachable:{}".format(len(return_dic['success']), len(return_dic['failed']),
-                                                          len(return_dic['unreachable'])))
-    success = return_dic['success']
-    unreachable = return_dic['unreachable']
-    failed = return_dic['failed']
-    return success, unreachable, failed, restr
 
 
 @login_required
@@ -155,7 +129,6 @@ class HostFilter(filters.FilterSet):
 
 class HostView(ViewSet):  # ViewSet
     filterset_class = HostFilter
-
     def list(self, request):
         hostinfo = models.Hostinfo.objects.all()
         filterset_class = HostFilter(request.GET, hostinfo)
@@ -245,58 +218,9 @@ def hostupdate(request):
     ip = request.GET.get('ip')
     if ip != '':
         iplist = str(ip).split(',')
-        success_dic, _a, _b, restr = RunAnsible(ip=iplist, _module='setup', _become='yes')
-        if success_dic:
-            try:
-                for ip in iplist:
-                    facts_dics = success_dic[ip]['ansible_facts']
-                    for network_infos in facts_dics:
-                        if 'macaddress' in str(facts_dics[network_infos]) and ip in str(facts_dics[network_infos]):
-                            mac = facts_dics[network_infos]['macaddress']
-                            netdev = network_infos
-                    kernel = facts_dics['ansible_kernel']
-                    cpu = facts_dics['ansible_processor'][2]
-                    vcpu = facts_dics['ansible_processor_vcpus']
-                    system = facts_dics['ansible_distribution'] + facts_dics['ansible_distribution_version']
-                    sn = facts_dics['ansible_product_serial']
-                    memory = facts_dics['ansible_memory_mb']['real']['total']
-                    hostname = facts_dics['ansible_fqdn']
-                    equipment_model = facts_dics['ansible_system_vendor']
-                    devices = facts_dics['ansible_devices']
-                    device = {}
-                    for i in devices.keys():
-                        print(i)
-                        if 'storage' in str(devices[i].get('host')) or 'VMware Virtual S' in \
-                                str(devices[i].get('model')):
-                            device[i] = devices[i]['size']
-                    disk_size = 0
-                    for diskname in device:
-                        size = float(device[diskname].split()[0])
-                        danwei = str(device[diskname].split()[1])
-                        if "GB" == danwei:
-                            disk_size += size
-                        elif "KB" == danwei:
-                            disk_size += size / 1024
-                    disk_size = int(disk_size)
-                    ip_obj = Hostinfo.objects.get(ip=ip)
-                    ip_obj.mac = mac
-                    ip_obj.hostname = hostname
-                    ip_obj.cpu = cpu
-                    ip_obj.vcpu = vcpu
-                    ip_obj.disk = disk_size
-                    ip_obj.system = system
-                    ip_obj.kernel = kernel
-                    ip_obj.sn = sn
-                    ip_obj.mem = memory
-                    ip_obj.equipment_model = equipment_model
-                    ip_obj.save()
-                return APIJsonResponse(data='操作成功', log=restr)
-            except Exception as e:
-                return APIJsonResponse(code=1, data='操作失败', log=e)
-
-        else:
-            log = "{}{}".format(_a, _b)
-            return APIJsonResponse(code=1, data='操作失败', log=log)
+        print(iplist)
+        RunAnsible.delay(is_sudo='on',iplist=iplist[:-1], ctype='setup', args=None)
+        return APIJsonResponse(data='任务进入后台执行请稍等', log='666')
 
 
 @login_required
@@ -330,7 +254,7 @@ def scan(request):
             for ip in hosts_list:
                 groupobj = AppGroup.objects.get(name=group)
                 if not Hostinfo.objects.filter(ip=ip):
-                    addos = Hostinfo.objects.create(ip=ip, vlan=vlanobj, app=groupobj)
+                    Hostinfo.objects.create(ip=ip, vlan=vlanobj, app=groupobj)
                     print("create", ip, groupobj, vlanobj)
                 else:
                     addos = Hostinfo.objects.get(ip=ip)
@@ -370,52 +294,24 @@ def shell(request):
         iplist = request.POST.getlist('ip')
         ctype = request.POST.get('type')
         is_sudo = request.POST.get('open')
+        print(iplist)
         if ctype == 'script':
             command = request.POST.get('script')
             script_args = request.POST.get('script_args')
             command = "{} {}".format(command, script_args)
         elif ctype == 'shell':
             command = request.POST.get('shell')
+        elif ctype == 'playbook':
+            command = request.POST.get('playbook')
         else:
             command = False
-        if is_sudo == 'on':
-            become = 'yes'
-        else:
-            become = None
-        if iplist:
-            if ctype == 'playbook':
-                command = request.POST.get('playbook')
-                print(command)
-                success, unreachable, failed, restr = RunAnsible(ip=iplist, _args=command, _type='playbook',
-                                                                 _become=become)
-            else:
-                success, unreachable, failed, restr = RunAnsible(ip=iplist, _module=ctype, _args=command,
-                                                                 _become=become)
-            for i in iplist:
-                resdic = {}
-                resstr = ''
-                resdic['resstr'] = ""
-                cmdstr = "{} $: {}\n".format(i, command)
-                resdic['cmdstr'] = cmdstr
-                if success.get(i):
-                    resstr += str(success.get(i)['stdout']) + "\n"
-                    resdic['resstr'] += resstr
-                if unreachable.get(i):
-                    resstr += str(unreachable.get(i)['msg']) + "\n"
-                    resdic['resstr'] += resstr
-                if failed.get(i):
-                    resstr += str(failed.get(i)['msg']) + "\n"
-                    resdic['resstr'] += resstr
-                shell_res.append(resdic)
-        else:
-            last_html = request.META.get('HTTP_REFERER', '/')
-            return HttpResponseRedirect(last_html)
-    else:
 
+        if iplist:
+            RunAnsible.delay(is_sudo=is_sudo,iplist=iplist,args=command,ctype=ctype)
+    else:
         iplist = str(request.GET.get('ip')).split(',')[:-1]
         ctype = request.GET.get('type')
         if len(iplist) == 0:
-            print(iplist, len(iplist))
             last_html = request.META.get('HTTP_REFERER', '/')
             return HttpResponseRedirect(last_html)
     if ctype == 'script':
@@ -425,6 +321,52 @@ def shell(request):
     return render(request, 'shell.html',
                   {'filelist': fileList, 'iplist': iplist, 'shell_res': shell_res, 'run_type': ctype})
 
+
+class ResultView(ViewSet):
+    def list(self, request):
+        RsultInfo = models.RunResult.objects.all()
+        return pagination_response(RsultInfo, request, appseries.RunResultSerializer)
+
+
+@login_required
+@is_super_user
+@xframe_options_exempt
+def runresult(request):
+    delid = request.GET.get('delid','')
+    if len(delid) > 0:
+
+        for id in str(delid).split(',')[:-1]:
+            models.RunResult.objects.get(id=id).delete()
+        return APIJsonResponse(data='操作成功')
+    return render(request, 'runresult.html')
+@login_required
+@is_super_user
+@xframe_options_exempt
+def openresult(request):
+    id = request.GET.get('id')
+    if id:
+        obj = models.RunResult.objects.get(id=id)
+        result_txt = obj.result_txt
+        if '任务正在执行中' in result_txt or '任务执行完成' in result_txt:
+            types='str'
+        else:
+            types='list'
+            result_txt=ast.literal_eval(result_txt)
+        return render(request,'openresult.html',{'result':result_txt,'types':types})
+
+@login_required
+@is_super_user
+@xframe_options_exempt
+def rerun(request):
+    id = request.GET.get('id')
+    if id:
+        task_obj = models.RunResult.objects.get(id=id)
+        iplist = task_obj.iplist.split(',')
+        is_sudo = task_obj.is_sudo
+        ctype = task_obj.ctype
+        args=task_obj.args
+        RunAnsible.delay(is_sudo,iplist, args, ctype,id=id)
+        return APIJsonResponse(data='任务进入后台执行请稍等', log='666')
 
 def logout(request):
     auth.logout(request)

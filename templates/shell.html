@@ -43,8 +43,7 @@
                         <label class="layui-form-label">脚本参数：</label>
                         <div class="layui-input-block">
                             <input type="text" name="script_args" lay-verify="title" autocomplete="off"
-                                   placeholder="jiaoben canshu" class="layui-input">
-
+                                   placeholder="脚本参数" class="layui-input">
                         </div>
                     </div>
                 </div>
@@ -67,24 +66,11 @@
                     <input type="checkbox" checked="" name="open" lay-skin="switch" lay-filter="switchTest"
                            lay-text="是|否">
                     <input type="text" hidden="yes" readonly unselectable="on" name="type" value="{{ run_type }}"/>
-                    <button lay-skin="button" lay-filter="submit" lay-submit class="layui-btn" type="submit">开始执行</button>
+                    <button lay-skin="button" lay-filter="submit" lay-submit class="layui-btn" type="submit">执行</button>
                 </div>
             </div>
         </form>
     </div>
-    {% if shell_res|length >= 1 %}
-        {% for res in shell_res %}
-            <div class="layui-collapse">
-                <div class="layui-colla-item">
-                    <h2 class="layui-colla-title">{{ res.cmdstr }}</h2>
-                    <div class="layui-colla-content layui-show">
-                        <pre style="color: midnightblue;font-size: 16px;">{{ res.cmdstr }}</pre>
-                        <pre style="color: midnightblue;font-size: 16px;">{{ res.resstr }}</pre>
-                    </div>
-                </div>
-            </div>
-        {% endfor %}
-    {% endif %}
 </div>
 </body>
 <script>
@@ -99,11 +85,8 @@
             });
             layer.tips('温馨提示：开启则通过sudo 执行命令', data.othis)
         });
-        form.on('button(submit)', function (data) {
-            layer.msg('sudo：' + (this.checked ? 'true' : 'false'), {
-                offset: '6px'
-            });
-            layer.tips('温馨提示：开启则通过sudo 执行命令', data.othis)
+        form.on('button(submit)', function () {
+            layer.msg('66666666666', {icon: 1});
         });
         form.verify({
             shell: function (value) {

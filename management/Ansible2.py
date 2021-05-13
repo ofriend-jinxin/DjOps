@@ -11,7 +11,6 @@ from ansible import context
 import ansible.constants as C
 
 
-
 class ResultCallback(CallbackBase):
     def __init__(self, *args, **kwargs):
         super(ResultCallback, self).__init__(*args, **kwargs)
@@ -91,6 +90,7 @@ class MyAnsiable():
 
         # 变量管理器
         self.variable_manager = VariableManager(self.loader, self.inv_obj)
+
     def run(self, gether_facts="no", module="ping", args='', task_time=0):
         """
         参数说明：
@@ -116,8 +116,7 @@ class MyAnsiable():
                 loader=self.loader,
                 passwords=self.passwords,
                 stdout_callback=self.results_callback)
-
-            result = tqm.run(play)
+            tqm.run(play)
         finally:
             if tqm is not None:
                 tqm.cleanup()
@@ -150,9 +149,10 @@ class MyAnsiable():
 
 
 if __name__ == '__main__':
-    host_list = ['192.168.101.12','192.168.101.18']
-    ans = MyAnsiable(iplist=host_list, remote_user='root',port=666)
-    ans.run()
-    print(ans.get_result())
-    ans.playbook(playbooks='/opt/a.yml')
+    hostlist = ['192.168.101.12', '192.168.101.18']
+    ans = MyAnsiable(iplist=hostlist, remote_user='tdops', become='yes', port='22',
+                     remote_password={"conn_pass": 'TZyk'})
+    ans.run(module='script', args='/Users/jinxin/PycharmProjects/DjOps/DjOps/localfile/shell/ls_root.sh')
+    # print(ans.get_result())
+    # ans.playbook(playbooks='/opt/a.yml')
     print(ans.get_result())

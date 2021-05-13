@@ -85,3 +85,12 @@ class Hostinfo(models.Model):
         verbose_name = '服务器列表'  # 指定后台显示模型名称
         verbose_name_plural = verbose_name # 指定后台显示模型复数名称
         ordering = ["id"]
+
+
+class RunResult(models.Model):
+    ctime = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+    iplist =  models.TextField(verbose_name='执行主机', blank=True)
+    ctype =  models.CharField(verbose_name='任务类型',max_length=128, blank=True)
+    args = models.CharField(verbose_name='任务参数', max_length=256,blank=True)
+    is_sudo = models.CharField(verbose_name='是否root', max_length=16,blank=True)
+    result_txt = models.TextField(verbose_name='命令结果', blank=True)

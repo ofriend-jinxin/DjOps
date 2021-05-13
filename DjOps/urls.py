@@ -35,9 +35,13 @@ urlpatterns = [
     path('hostdel/',mv.hostdel),
     path('scan/', mv.scan),
     path('shell/', mv.shell),
+    path('runresult/', mv.runresult),
+    path('openresult/', mv.openresult),
+    path('rerun/', mv.rerun),
+
 
     #path('api/hosts/', mv.HostView.as_view(actions={'get': 'retrieve', 'post': 'create'})),
-
+    path('api/results/', mv.ResultView.as_view(actions={'get':'list'})),
     path('api/hosts/', mv.HostView.as_view(actions={'get': 'list'})),
     re_path('api/hosts/(?P<pk>\d+)',
             mv.HostView.as_view(actions={'get': 'retrieve','put':'update'})),

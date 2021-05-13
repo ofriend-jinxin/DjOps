@@ -3,7 +3,13 @@ import inspect
 from management import models
 
 
+
 # 找出模块里所有的类名
+@admin.register(models.RunResult)
+class RunResult(admin.ModelAdmin):
+    display = ['id']
+    list_display = display
+    search_fields = display
 
 @admin.register(models.Cabinet)
 class Cabinetadmin(admin.ModelAdmin):

@@ -17,6 +17,10 @@ python manage.py  makemigrations
 python manage.py migrate
 python manage.py createsuperuser
 python manage.py runserver
+# 运行celery
+export PYTHONOPTIMIZE=1 
+celery -A celery_tasks.celery  worker -B -l info --beat
+
 ```
 # 页面操作
 * admin 后台服务器列表添加机柜，设备类型，应用，网段地址，新建的第一个可以写成默认xx（默认机柜、默认机房。。。。）
@@ -28,5 +32,9 @@ python manage.py runserver
 ![image](https://user-images.githubusercontent.com/28593701/117625902-1b449180-b1a9-11eb-96da-24b684611348.png)
 
 ## 2021、5、10 更新
-去掉nmap。重新写了个scan扫描端口
-优化前端交互 增加搜索分页功能
+* 去掉nmap。重新写了个scan扫描端口
+* 优化前端交互 增加搜索分页功能
+
+## 2021、5、13 更新
+* 增加异步执行脚本、命令、playbook
+* 增加执行结果查询

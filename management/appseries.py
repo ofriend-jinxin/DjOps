@@ -66,3 +66,15 @@ class HostinfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Hostinfo
         fields = '__all__'
+
+class RunResultSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False, read_only=True)
+    ctime = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", required=False, read_only=True)
+    iplist = serializers.CharField(required=False,read_only=True)
+    ctype = serializers.CharField(required=False,read_only=True)
+    args = serializers.CharField(required=False,read_only=True)
+    is_sudo = serializers.CharField(required=False,read_only=True)
+    result_txt = serializers.CharField(required=False,read_only=True)
+    class Meta:
+        model = models.RunResult
+        fields = '__all__'
