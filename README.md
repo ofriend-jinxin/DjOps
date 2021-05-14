@@ -37,7 +37,7 @@ celery -A celery_tasks.celery  worker -B -l info --beat
 ```
 
 * 目前还有好多问题。比如异步执行动作，页面样式等。慢慢来吧~
-![image](https://user-images.githubusercontent.com/28593701/117625902-1b449180-b1a9-11eb-96da-24b684611348.png)
+![image](https://user-images.githubusercontent.com/28593701/118287152-c0db6600-b505-11eb-9b9f-a07c3fd6bd49.png)
 
 ## 2021、5、10 更新
 * 去掉nmap。重新写了个scan扫描端口
