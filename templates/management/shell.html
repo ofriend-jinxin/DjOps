@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block main %}
+    <div class="layui-form-item">
+        <div>
+            <form name="shell" class="layui-form">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">主机ip：</label>
+                    <div class="layui-input-block">
+                        {% for ip in iplist %}
+                            <input type="checkbox" checked="true" name="ip" value="{{ ip }}" title="{{ ip }}">
+                        {% endfor %}
+                    </div>
+                </div>
+                {% if run_type == 'shell' %}
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">输入命令：</label>
+                        <div class="layui-input-inline">
+                            <input type="text" lay-verify="required" name="shell" placeholder="不支持换行 命令之间用;隔开"
+                                   class="layui-input">
+                        </div>
+                    </div>
+                {% elif run_type == 'script' %}
+                    <div class="layui-inline">
+                        <label class="layui-form-label">选择脚本</label>
+                        <div class="layui-input-inline">
+                            <select name="script" lay-verify="required" lay-search="">
+                                <option value="">选择或搜索</option>
+                                {% for file in filelist %}
+                                    <option value={{ file.path }}>{{ file.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">脚本参数</label>
+                            <div class="layui-input-block">
+                                <input type="text" name="script_args" lay-verify="title" autocomplete="off"
+                                       placeholder="脚本参数" class="layui-input">
+                            </div>
+                        </div>
+                    </div>
+                {% elif run_type == 'playbook' %}
+                    <div class="layui-inline">
+                        <label class="layui-form-label">选择yml</label>
+                        <div class="layui-input-inline">
+                            <select name="playbook" lay-verify="required" lay-search="">
+                                <option value="">选择或搜索</option>
+                                {% for file in filelist %}
+                                    <option value={{ file.path }}>{{ file.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                {% endif %}
+                <div class="layui-form-item">
+                    <label class="layui-form-label">是否sudo</label>
+                    <div class="layui-input-block">
+                        <input type="checkbox" checked="" name="open" lay-skin="switch" lay-filter="switchTest"
+                               lay-text="是|否">
+                        <input type="text" hidden="yes" readonly unselectable="on" name="type" value="{{ run_type }}"/>
+                        <button lay-skin="button" lay-filter="shell" lay-submit class="layui-btn" type="submit">执行
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+{% block js-content %}
+    <script>
+
+        layui.use(['form', 'layedit', 'laydate'], function () {
+            var form = layui.form, layer = layui.layer, $ = layui.$
+            //监听指定开关
+            form.on('switch(switchTest)', function (data) {
+                layer.msg('sudo：' + (this.checked ? 'true' : 'false'), {
+                    offset: '6px'
+                });
+                layer.tips('温馨提示：开启则通过sudo 执行命令', data.othis)
+            });
+            form.on('submit(shell)', function (data) {
+                var url = '/shell/'
+                $.ajax({
+                    type: 'POST',
+                    url: url,//发送请求
+                    async: false,
+                    data: $("form[name=shell]").serialize(),//{param1: vlan, param2: app},
+                    success: function (resdata) {
+                        if (resdata.code == 0) {
+                            console.log(resdata.log);
+                            layer.msg(resdata.msg, {icon: 1, time: 2000}, function () {
+                                window.parent.location.reload(); //刷新父窗口
+                            });
+
+                        } else {
+                            layer.msg(resdata.msg, {icon: 2});
+                            console.log(resdata.log);
+                        }
+                    }
+                });
+                return false; // 这段很关键
+            });
+
+        });
+    </script>
+{% endblock js-content %}

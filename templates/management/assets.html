@@ -1,16 +1,102 @@
 {% extends 'base.html' %}
 {% block content %}
-    <div class="demoTable">
-        搜索IP：
-        <div class="layui-inline">
-            <input class="layui-input" name="id" id="demoReload" autocomplete="off">
+    <form class="layui-form" action="">
+        <div class="layui-collapse" lay-filter="test">
+            <div class="layui-colla-item">
+                <h2 class="layui-colla-title">展开搜索</h2>
+                <div class="layui-colla-content">
+                    <div class="demoTable">
+                        <div class="layui-form-item">
+                            <div class="layui-inline">
+                                <label class="layui-form-label">业务IP：</label>
+                                <div class="layui-input-inline">
+                                    <input class="layui-input" id="search_ip" autocomplete="off">
+                                </div>
+                            </div>
+                            <div class="layui-inline">
+                                <label class="layui-form-label">机器SN：</label>
+                                <div class="layui-input-inline">
+                                    <input class="layui-input" id="search_sn" autocomplete="off">
+                                </div>
+                            </div>
+                            <div class="layui-inline">
+                                <label class="layui-form-label">带外IP:</label>
+                                <div class="layui-input-inline">
+                                    <input class="layui-input" id="search_oobip" autocomplete="off">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <div class="layui-inline">
+                                <label class="layui-form-label">主机类型</label>
+                                <div class="layui-input-inline">
+                                    <select id="search_type" lay-search="">
+                                        <option value="">搜索选择</option>
+                                        {% for name in hosttype %}
+                                            <option value="{{ name }}">{{ name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="layui-inline">
+                                <label class="layui-form-label">应用</label>
+                                <div class="layui-input-inline">
+                                    <select id="search_app" lay-search="">
+                                        <option value="">搜索选择</option>
+                                        {% for name in app %}
+                                            <option value="{{ name }}">{{ name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="layui-inline">
+                                <label class="layui-form-label">模糊查询</label>
+                                <div class="layui-input-block">
+                                    <input type="checkbox" id="is_like" checked="" title="模糊查询" value="is_like">
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="layui-form-item">
+                            <div class="layui-inline">
+                                <label class="layui-form-label">机房</label>
+                                <div class="layui-input-inline">
+                                    <select id="search_idc" lay-search="">
+                                        <option value="">搜索选择</option>
+                                        {% for name in idc %}
+                                            <option value="{{ name }}">{{ name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="layui-inline">
+                                <label class="layui-form-label">环境</label>
+                                <div class="layui-input-inline">
+                                    <select id="search_vlan" lay-search="">
+                                        <option value="">搜索选择</option>
+                                        {% for name in vlan %}
+                                            <option value="{{ name.vlan_area }}">{{ name.vlan_area }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="layui-inline">
+                                <label class="layui-form-label">点击搜索👉🏻</label>
+                                <div class="layui-input-inline">
+                                    <a class="layui-btn layui-btn-primary layui-btn-big" data-type="reload">搜索</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <button class="layui-btn" data-type="reload">搜索</button>
-    </div>
+    </form>
+    <table class="layui-hide" id="assets" lay-filter="assets"></table>
+{% endblock content %}
 
-
-    <table class="layui-hide" id="test" lay-filter="test"></table>
-
+{% block js-content %}
     <script type="text/html" id="toolbarDemo">
         <div class="layui-btn-container">
 
@@ -29,10 +115,9 @@
     <script>
 
         layui.use('table', function () {
-            var table = layui.table;
-
+            var table = layui.table, layer = layui.layer, $ = layui.$;
             table.render({
-                elem: '#test'
+                elem: '#assets'
                 , url: '/api/hosts/'
                 , toolbar: '#toolbarDemo' //开启头部工具栏，并为其绑定左侧模板
 
@@ -46,6 +131,8 @@
                     , {field: 'id', title: 'ID', fixed: 'left', unresize: true, sort: true, width: 70, event}
                     , {field: 'ip', title: 'IP', width: 140, sort: true}
                     , {field: 'hostname', title: '主机名', width: 140, sort: true}
+                    , {field: 'sn', title: 'SN', sort: true, width: 100,}
+                    , {field: 'oobip', title: '带外IP', sort: true, width: 140,}
                     , {
                         field: 'app', title: '应用', width: 100, sort: true, templet: function (res) {
                             return '<em>' + res.app.name + '</em>'
@@ -74,15 +161,14 @@
                     , {field: 'notes', title: '备注信息', sort: true, hide: true}
                     , {field: 'kernel', title: '内核版本', sort: true, hide: true}
                     , {field: 'system', title: '系统版本', sort: true, width: 120}
-                    , {field: 'exceedtime', title: '到期时间', sort: true, width: 200,},
-                    , {fixed: 'right', title: '操作', toolbar: '#barDemo',}
+                    , {field: 'exceedtime', title: '到期时间', sort: true, width: 200,}
+                    , {fixed: 'right', title: '操作', toolbar: '#barDemo', width: 150,}
                 ]]
                 , page: true
                 , id: 'tabReload'
             });
             //头工具栏事件
-
-            table.on('toolbar(test)', function (obj) {
+            table.on('toolbar(assets)', function (obj) {
                 var checkStatus = table.checkStatus(obj.config.id);
                 var iplist = ''
                 var data = checkStatus.data;
@@ -114,7 +200,6 @@
                                 btn: ['确认', '取消']
                             }, function () {
                                 // 按钮1的事件
-                                layer.msg("确认操作，请耐心等待");
                                 $.ajax({
                                     type: "get",
                                     url: url,
@@ -130,12 +215,11 @@
                                         }
                                     }
                                 });
+                                return false; // 这段很关键
                             }, function (index) {
                                 // 按钮2的事件
                                 layer.close(index);
                             });
-
-
                             break;
                         case
                         'getCheckLength'
@@ -143,16 +227,14 @@
                             var data = checkStatus.data;
                             layer.msg('选中了：' + data.length + ' 个');
                             break;
-
-                        //自定义头工具栏右侧图标 - 提示
-                        case
-                        'LAYTABLE_TIPS'
-                        :
-                            layer.alert('这是工具栏右侧自定义的一个图标按钮');
-                            break;
                         case 'isAll':
                             layer.msg(checkStatus.isAll ? '全选' : '未全选');
                             break;
+                    }
+                } else if (obj.event.indexOf("LAYTABLE") >= 0) {
+                    //自定义头工具栏右侧图标 - 提示
+                    if (obj.event == 'LAYTABLE_TIPS') {
+                        layer.alert('这是工具栏右侧自定义的一个图标按钮');
                     }
                 } else {
                     layer.msg('未选中任何主机');
@@ -160,15 +242,14 @@
             })
             ;
             //监听行单击事件（双击事件为：rowDouble）
-            table.on('row(test)', function (obj) {
+            table.on('row(assets)', function (obj) {
                 var data = obj.data;
-                console.log(obj.event)
+                console.log(obj.data)
 
             });
 
-
             //监听行工具事件
-            table.on('tool(test)', function (obj) {
+            table.on('tool(assets)', function (obj) {
                 var data = obj.data;
                 if (obj.event == 'del') {
                     var url = '/hostdel?ip=' + data.ip
@@ -182,7 +263,6 @@
                     btn: ['确认', '取消']
                 }, function () {
                     // 按钮1的事件
-                    layer.msg("确认操作，请耐心等待");
                     $.ajax({
                         type: "get",
                         url: url,
@@ -191,43 +271,55 @@
                             if (resdata.code == 0) {
                                 layer.msg(resdata.msg, {icon: 1});
                                 console.log(resdata.log);
-                                window.setTimeout("javascript:location.href='/allinfo/'", 1500);
+                                window.setTimeout("javascript:location.href='/assets/'", 1500);
                             } else {
                                 layer.msg(resdata.msg, {icon: 2});
                                 console.log(resdata.log);
                             }
                         }
                     });
+                    return false; // 这段很关键
                 }, function (index) {
                     // 按钮2的事件
                     layer.close(index);
                 });
 
             });
-
-            var $ = layui.$, active = {
+            var active = {
                 reload: function () {
-                    var demoReload = $('#demoReload');
-
+                    var search_ip = $('#search_ip');
+                    var search_sn = $('#search_sn');
+                    var search_oobip = $('#search_oobip');
+                    var search_type = $('#search_type');
+                    var search_app = $('#search_app');
+                    var search_idc = $('#search_idc');
+                    var search_vlan = $('#search_vlan');
+                    var is_like = $('#is_like');
                     table.reload('tabReload', {
                         page: {
                             curr: 1
                         }
                         , where: {
-                            ip: demoReload.val()
+                            ip: search_ip.val(),
+                            sn: search_sn.val(),
+                            oobip: search_oobip.val(),
+                            hosttype: search_type.val(),
+                            app: search_app.val(),
+                            idc: search_idc.val(),
+                            vlan: search_vlan.val(),
+                            is_like: is_like.is(":checked"),
 
                         }
                     });
+                    return false;
                 }
             };
-
             $('.demoTable .layui-btn').on('click', function () {
                 var type = $(this).data('type');
                 active[type] ? active[type].call(this) : '';
             });
         })
-        ;
-    </script>
 
-{% endblock content %}
+    </script>
+{% endblock js-content %}
 

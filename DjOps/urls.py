@@ -29,7 +29,7 @@ urlpatterns = [
     path('login/', mv.login),
     path('logout/', mv.logout),
     path('', mv.index),
-    path('allinfo/', mv.allinfo),
+    path('assets/', mv.assets),
     path('resinfo/', mv.resinfo),
     path('hostupdate/', mv.hostupdate),
     path('hostdel/',mv.hostdel),
@@ -38,6 +38,7 @@ urlpatterns = [
     path('runresult/', mv.runresult),
     path('openresult/', mv.openresult),
     path('rerun/', mv.rerun),
+    path('test/', mv.testhtml),
 
 
     #path('api/hosts/', mv.HostView.as_view(actions={'get': 'retrieve', 'post': 'create'})),

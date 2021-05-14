@@ -6,7 +6,8 @@ import datetime
 # 需要交互（接口增删改）用ModelSerializer,不需要交互用Serializer
 # Create your models here.
 class AppGroupSerializer(serializers.Serializer):
-    name=serializers.CharField(required=False)
+    name = serializers.CharField(required=False)
+
 
 # 网段
 class VlaninfoSerializer(serializers.Serializer):
@@ -53,7 +54,6 @@ class HostinfoSerializer(serializers.ModelSerializer):
     oobip = serializers.CharField(required=False)
     mac = serializers.CharField(required=False)
     sn = serializers.CharField(required=False)
-
     system = serializers.CharField(required=False)
     kernel = serializers.CharField(required=False)
     cpu = serializers.CharField(required=False)
@@ -67,14 +67,17 @@ class HostinfoSerializer(serializers.ModelSerializer):
         model = models.Hostinfo
         fields = '__all__'
 
+
 class RunResultSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False, read_only=True)
+    num = serializers.IntegerField(required=False, read_only=True)
     ctime = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", required=False, read_only=True)
-    iplist = serializers.CharField(required=False,read_only=True)
-    ctype = serializers.CharField(required=False,read_only=True)
-    args = serializers.CharField(required=False,read_only=True)
-    is_sudo = serializers.CharField(required=False,read_only=True)
-    result_txt = serializers.CharField(required=False,read_only=True)
+    iplist = serializers.CharField(required=False, read_only=True)
+    ctype = serializers.CharField(required=False, read_only=True)
+    args = serializers.CharField(required=False, read_only=True)
+    is_sudo = serializers.CharField(required=False, read_only=True)
+    result_txt = serializers.CharField(required=False, read_only=True)
+
     class Meta:
         model = models.RunResult
         fields = '__all__'

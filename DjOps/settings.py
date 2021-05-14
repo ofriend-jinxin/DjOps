@@ -12,10 +12,11 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 
 from pathlib import Path
 import os
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-#import pymysql
-#pymysql.install_as_MySQLdb()
+# import pymysql
+# pymysql.install_as_MySQLdb()
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
@@ -27,7 +28,6 @@ SECRET_KEY = 'django-insecure-vtfh)kp1&ul^7fr$i(22l@0p_7#dk&vyu1p2k7=b8te168=3l#
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
-
 
 # Application definition
 
@@ -47,12 +47,13 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    #'django.middleware.csrf.CsrfViewMiddleware',
+    # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-]
 
+]
+X_FRAME_OPTIONS = 'SAMEORIGIN'
 ROOT_URLCONF = 'DjOps.urls'
 
 TEMPLATES = [
@@ -74,7 +75,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'DjOps.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
@@ -84,7 +84,6 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
@@ -104,7 +103,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
 
@@ -118,17 +116,16 @@ USE_L10N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = (
-    os.path.join(BASE_DIR, "static"), # BASE_DIR指project的路径，即dynet目录的路径
+    os.path.join(BASE_DIR, "static"),  # BASE_DIR指project的路径，即dynet目录的路径
 )
 LOGIN_URL = '/login/'
 
-USE_X_FORWARDED_HOST  = True
+USE_X_FORWARDED_HOST = True
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
@@ -136,20 +133,19 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # 不管浏览器还是postman都返回json格式
 # 全局使用 # 这里都是drf的全局配置信息
 REST_FRAMEWORK = {
-    'DEFAULT_RENDERER_CLASSES':(# 默认配置
-        'rest_framework.renderers.JSONRenderer', #json渲染器
-        'rest_framework.renderers.BrowsableAPIRenderer', # 浏览器API渲染器,不需要注释掉就可以了
+    'DEFAULT_RENDERER_CLASSES': (  # 默认配置
+        'rest_framework.renderers.JSONRenderer',  # json渲染器
+        'rest_framework.renderers.BrowsableAPIRenderer',  # 浏览器API渲染器,不需要注释掉就可以了
     ),
     'DEFAULT_FILTER_BACKENDS': (
         'django_filters.rest_framework.DjangoFilterBackend',
     )
 }
 SSH_INFO = {
-    'SSH_PORT' : '22',
-    'SSH_USER' : 'root',
-    'SSH_PASS' : '123456',
+    'SSH_PORT': '22',
+    'SSH_USER': 'root',
+    'SSH_PASS': '123456',
 }
-
 
 # 配置log#  log  首先创建日志存储路径.
 log_path = os.path.join(BASE_DIR, "logs")

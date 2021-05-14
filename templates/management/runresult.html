@@ -1,22 +1,46 @@
 {% extends 'base.html' %}
 {% block content %}
-    <div class="demoTable">
-        搜索ip：
-        <div class="layui-inline">
-            <input class="layui-input" name="id" id="demoReload" autocomplete="off">
+    <div class="layui-collapse" lay-filter="test">
+        <div class="layui-colla-item">
+            <h2 class="layui-colla-title">展开搜索</h2>
+            <div class="layui-colla-content">
+                <div class="demoTable">
+                    IP：
+                    <div class="layui-inline">
+                        <input class="layui-input" id="search_ip" autocomplete="off">
+                    </div>
+
+                    SN：
+                    <div class="layui-inline">
+                        <input class="layui-input" id="search_sn" autocomplete="off">
+                    </div>
+                    应用：
+                    <div class="layui-inline">
+                        <input class="layui-input" id="search_app" autocomplete="off">
+                    </div>
+                    主机名：
+                    <div class="layui-inline">
+                        <input class="layui-input" id="search_hostname" autocomplete="off">
+                    </div>
+                    <button class="layui-btn" data-type="reload">搜索</button>
+                </div>
+            </div>
         </div>
-        <button class="layui-btn" data-type="reload">搜索</button>
     </div>
+
+    <table class="layui-hide" id="runresult" lay-filter="runresult"></table>
+
+
+{% endblock content %}
+
+{% block js-content %}
     <script type="text/html" id="toolbarDemo">
         <div class="layui-btn-container">
 
-            <button class="layui-btn layui-btn-sm" lay-event="delete">批量删除</button>
+            <button class="layui-btn layui-btn-sm layui-btn-danger" lay-event="delete">批量删除</button>
 
         </div>
     </script>
-
-    <table class="layui-hide" id="test" lay-filter="test"></table>
-
 
     <script type="text/html" id="barDemo">
         <a class="layui-btn layui-btn-xs" data-method="open" lay-event="open">查看结果</a>
@@ -25,10 +49,9 @@
     <script>
 
         layui.use('table', function () {
-            var table = layui.table;
-
+            var table = layui.table, layer = layui.layer, element = layui.element, util = layui.util, $ = layui.$;
             table.render({
-                elem: '#test'
+                elem: '#runresult'
                 , url: '/api/results/'
                 , toolbar: '#toolbarDemo' //开启头部工具栏，并为其绑定左侧模板
 
@@ -40,7 +63,8 @@
                 , cols: [[
                     {type: 'checkbox', fixed: 'left', sort: true, id: 'goodsLimitSeqNo'}
                     , {field: 'id', title: 'id', fixed: 'left', unresize: true, width: 60}
-                    , {field: 'iplist', title: 'IP', width: 300, sort: true}
+                    , {field: 'ip', title: 'IP', width: 300, sort: true}
+                    , {field: 'num', title: 'IP数量', width: 120, sort: true}
                     , {field: 'ctype', title: '任务类型', width: 110, sort: true}
                     , {field: 'args', title: '任务参数', sort: true, width: 200,}
                     , {field: 'is_sudo', title: 'sudo', sort: true, width: 100,}
@@ -55,17 +79,8 @@
                 , page: true
                 , id: 'tabReload'
             });
-            //头工具栏事件
-
-            //监听行单击事件（双击事件为：rowDouble）
-            table.on('row(test)', function (obj) {
-                var data = obj.data;
-                console.log(obj.event)
-
-            });
-
             //监听行工具事件
-            table.on('tool(test)', function (obj) {
+            table.on('tool(runresult)', function (obj) {
                     var data = obj.data;
                     if (obj.event == 'open') {
                         var url = '/openresult/?id=' + data.id
@@ -81,16 +96,16 @@
 
                     } else if (obj.event == 'rerun') {
                         var boxmsg = '重新执行'
-                        var url = "/rerun/?id=" + data.id
+                        var url = "/rerun/"
                         layer.confirm(boxmsg, {
                             btn: ['确认', '取消']
                         }, function () {
                             // 按钮1的事件
-                            layer.msg("确认操作，请耐心等待");
                             $.ajax({
-                                type: "get",
+                                type: "POST",
                                 url: url,
                                 async: false,
+                                data: {"id": data.id},
                                 success: function (resdata) {
                                     if (resdata.code == 0) {
                                         layer.msg(resdata.msg, {icon: 1});
@@ -102,6 +117,7 @@
                                     }
                                 }
                             });
+                            return false;
                         }, function (index) {
                             // 按钮2的事件
                             layer.close(index);
@@ -111,22 +127,8 @@
                 }
             );
 
-            var $ = layui.$, active = {
-                reload: function () {
-                    var demoReload = $('#demoReload');
 
-                    table.reload('tabReload', {
-                        page: {
-                            curr: 1
-                        }
-                        , where: {
-                            ip: demoReload.val()
-
-                        }
-                    });
-                }
-            };
-            table.on('toolbar(test)', function (obj) {
+            table.on('toolbar(runresult)', function (obj) {
                 var checkStatus = table.checkStatus(obj.config.id);
                 var data = checkStatus.data;
                 var idlist = ''
@@ -174,13 +176,34 @@
                 }
 
             })
-            ;$('.demoTable .layui-btn').on('click', function () {
+            var active = {
+                reload: function () {
+                    var search_ip = $('#search_ip');
+                    var search_sn = $('#search_sn');
+                    var search_app = $('#search_app');
+                    var search_hostname = $('#search_hostname');
+
+                    table.reload('tabReload', {
+                        page: {
+                            curr: 1
+                        }
+                        , where: {
+                            ip: search_ip.val(),
+                            sn: search_sn.val(),
+                            app: search_app.val(),
+                            hostname: search_hostname.val(),
+
+                        }
+                    });
+                }
+            };
+            $('.demoTable .layui-btn').on('click', function () {
                 var type = $(this).data('type');
                 active[type] ? active[type].call(this) : '';
             });
         })
-        ;
+
     </script>
 
-{% endblock content %}
+{% endblock js-content %}
 

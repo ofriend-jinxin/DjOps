@@ -150,8 +150,8 @@ class MyAnsiable():
 
 if __name__ == '__main__':
     hostlist = ['192.168.101.12', '192.168.101.18']
-    ans = MyAnsiable(iplist=hostlist, remote_user='tdops', become='yes', port='22',
-                     remote_password={"conn_pass": 'TZyk'})
+    ans = MyAnsiable(iplist=hostlist, remote_user='root', become='yes', port='22',
+                     remote_password={"conn_pass": '123456'})
     ans.run(module='script', args='/Users/jinxin/PycharmProjects/DjOps/DjOps/localfile/shell/ls_root.sh')
     # print(ans.get_result())
     # ans.playbook(playbooks='/opt/a.yml')

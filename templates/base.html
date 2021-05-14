@@ -6,117 +6,90 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>DjOps</title>
     <link rel="stylesheet" href="{% static 'layui/css/layui.css' %}" media="all" type="text/css">
-    <!-- 先引入 jquery -->
-    <script type="text/javascript" src="{% static 'layui/layui.js' %}"></script>
+    {% block css-content %}
 
-    <style type="text/css">
-        .container {
-            width: 420px;
-            height: 220px;
-            position: absolute;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            right: 0;
-            margin: auto;
-            padding: 20px;
-            z-index: 130;
-            border-radius: 8px;
-            background-color: #fff;
-            box-shadow: 0 3px 18px rgba(100, 0, 0, .5);
-            font-size: 16px;
-        }
-
-        .layui-input {
-            border-radius: 5px;
-            width: 300px;
-            height: 40px;
-            font-size: 15px;
-        }
-
-
-
-
-
-    </style>
+    {% endblock %}
 </head>
 <body>
-<div class="layui-layout layui-layout-admin">
-    <div class="layui-header">
-        <div class="layui-logo layui-hide-xs layui-bg-black">DjOps v1</div>
-        <!-- 头部区域（可配合layui 已有的水平导航） -->
-        <ul class="layui-nav layui-layout-left">
-            <!-- 移动端显示 -->
-            <li class="layui-nav-item layui-show-xs-inline-block layui-hide-sm" lay-header-event="menuLeft">
-                <i class="layui-icon layui-icon-spread-left"></i>
-            </li>
-            <li class="layui-nav-item layui-hide-xs"><a href="/">首页</a></li>
-            <li class="layui-nav-item layui-hide-xs"><a href="/allinfo">查看资源</a></li>
-        </ul>
-        <ul class="layui-nav layui-layout-right">
-            <li class="layui-nav-item layui-hide layui-show-md-inline-block">
-                <a href="javascript:;">
-                    <img src="//tva1.sinaimg.cn/crop.0.0.118.118.180/5db11ff4gw1e77d3nqrv8j203b03cweg.jpg"
-                         class="layui-nav-img">
-                    {{ user }}
-                </a>
-                <dl class="layui-nav-child">
-                    <dd><a href="">后台管理</a></dd>
-                    <dd><a href="/logout/">退出登录</a></dd>
-                </dl>
-            </li>
-            <li class="layui-nav-item" lay-header-event="menuRight" lay-unselect>
-                <a href="javascript:;">
-                    <i class="layui-icon layui-icon-more-vertical"></i>
-                </a>
-            </li>
-        </ul>
-    </div>
-
-    <div class="layui-side layui-bg-black">
-        <div class="layui-side-scroll">
-            <!-- 左侧导航区域（可配合layui已有的垂直导航） -->
-            <ul class="layui-nav layui-nav-tree" lay-filter="test">
-                <li class="layui-nav-item layui-nav-itemed">
-                    <a class="" href="javascript:;">资源管理</a>
+{% block main %}
+    <div class="layui-layout layui-layout-admin">
+        <div class="layui-header">
+            <div class="layui-logo layui-hide-xs layui-bg-black">DjOps v1</div>
+            <!-- 头部区域（可配合layui 已有的水平导航） -->
+            <ul class="layui-nav layui-layout-left">
+                <!-- 移动端显示 -->
+                <li class="layui-nav-item layui-show-xs-inline-block layui-hide-sm" lay-header-event="menuLeft">
+                    <i class="layui-icon layui-icon-spread-left"></i>
+                </li>
+                <li class="layui-nav-item layui-hide-xs"><a href="/">首页</a></li>
+                <li class="layui-nav-item layui-hide-xs"><a href="/assets">查看资源</a></li>
+            </ul>
+            <ul class="layui-nav layui-layout-right">
+                <li class="layui-nav-item layui-hide layui-show-md-inline-block">
+                    <a href="javascript:;">
+                        <img src="//tva1.sinaimg.cn/crop.0.0.118.118.180/5db11ff4gw1e77d3nqrv8j203b03cweg.jpg"
+                             class="layui-nav-img">
+                        {{ user }}
+                    </a>
                     <dl class="layui-nav-child">
-                        <dd><a href="/allinfo/">查看资源</a></dd>
-                        <dd><a href="/scan/">扫描网段</a></dd>
-                        <dd><a href="/runresult/">执行结果查询</a></dd>
+                        <dd><a href="">后台管理</a></dd>
+                        <dd><a href="/logout/">退出登录</a></dd>
                     </dl>
                 </li>
-                <li class="layui-nav-item">
-                    <a href="javascript:;">menu group 2</a>
-                    <dl class="layui-nav-child">
-                        <dd><a href="javascript:;">list 1</a></dd>
-                        <dd><a href="javascript:;">list 2</a></dd>
-                        <dd><a href="">超链接</a></dd>
-                    </dl>
+                <li class="layui-nav-item" lay-header-event="menuRight" lay-unselect>
+                    <a href="javascript:;">
+                        <i class="layui-icon layui-icon-more-vertical"></i>
+                    </a>
                 </li>
-                <li class="layui-nav-item"><a href="javascript:;">click menu item</a></li>
-                <li class="layui-nav-item"><a href="">the links</a></li>
             </ul>
         </div>
-    </div>
 
-    <div class="layui-body">
-        <!-- 内容主体区域 -->
-        <div style="padding: 30px;">{% block content %}{% endblock content %}</div>
-    </div>
+        <div class="layui-side layui-bg-black">
+            <div class="layui-side-scroll">
+                <!-- 左侧导航区域（可配合layui已有的垂直导航） -->
+                <ul class="layui-nav layui-nav-tree" lay-filter="test">
+                    <li class="layui-nav-item layui-nav-itemed">
+                        <a class="" href="javascript:;">资源管理</a>
+                        <dl class="layui-nav-child">
+                            <dd><a href="/assets/">查看资源</a></dd>
+                            <dd><a href="/scan/">扫描网段</a></dd>
+                            <dd><a href="/runresult/">执行结果查询</a></dd>
+                        </dl>
+                    </li>
+                    <li class="layui-nav-item">
+                        <a href="javascript:;">menu group 2</a>
+                        <dl class="layui-nav-child">
+                            <dd><a href="javascript:;">list 1</a></dd>
+                            <dd><a href="javascript:;">list 2</a></dd>
+                            <dd><a href="">超链接</a></dd>
+                        </dl>
+                    </li>
+                    <li class="layui-nav-item"><a href="javascript:;">click menu item</a></li>
+                    <li class="layui-nav-item"><a href="">the links</a></li>
+                </ul>
+            </div>
+        </div>
 
-    <div class="layui-footer">
-        <!-- 底部固定区域 -->
-        底部固定区域
+        <div class="layui-body">
+            <!-- 内容主体区域 -->
+            <div style="padding: 30px;">{% block content %}{% endblock content %}</div>
+        </div>
+
+        <div class="layui-footer">
+            <!-- 底部固定区域 -->
+            底部固定区域 www.maerxin.cn
+        </div>
     </div>
-</div>
+{% endblock %}
+<script type="text/javascript" src="{% static 'layui/layui.js' %}"></script>
+{% block js-content %}
+
+{% endblock %}
 
 <script>
-    //JS
-    layui.use(['element', 'layer', 'util'], function () {
-        var element = layui.element
-            , layer = layui.layer
-            , util = layui.util
-            , $ = layui.$;
+    layui.use(['form', 'layedit', 'laydate'], function () {
+        var form = layui.form, layer = layui.layer,element = layui.element, util = layui.util, $ = layui.$;
+
 
         //头部事件
         util.event('lay-header-event', {
@@ -126,7 +99,10 @@
             }
         });
 
-    });
+
+
+    })
 </script>
+
 </body>
 </html>
