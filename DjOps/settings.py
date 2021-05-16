@@ -38,16 +38,16 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'management.apps.ManagementConfig',
+    'ops.apps.ManagementConfig',
     'rest_framework',
     'django_filters',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
+     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    # 'django.middleware.csrf.CsrfViewMiddleware',
+     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -106,7 +106,8 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
 
-LANGUAGE_CODE = 'zh-hans'
+#LANGUAGE_CODE = 'zh-hans'
+LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'Asia/Shanghai'
 
@@ -166,10 +167,6 @@ LOGGING = {
         'simple': {
             'format': '[%(levelname)s][%(asctime)s][%(filename)s:%(lineno)d]%(message)s'
         },
-        # 定义一个特殊的日志格式
-        'collect': {
-            'format': '%(message)s'
-        }
     },
     # 过滤器
     'filters': {
@@ -203,16 +200,6 @@ LOGGING = {
             'formatter': 'standard',
             'encoding': 'utf-8',
         },
-        # 专门定义一个收集特定信息的日志
-        'collect': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',  # 保存到文件，自动切
-            'filename': os.path.join(log_path, "collect.log"),
-            'maxBytes': 1024 * 1024 * 50,  # 日志大小 50M
-            'backupCount': 5,
-            'formatter': 'collect',
-            'encoding': "utf-8"
-        }
     },
     'loggers': {
         'django': {  # 默认的logger应用如下配置

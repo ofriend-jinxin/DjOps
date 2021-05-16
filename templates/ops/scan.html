@@ -3,7 +3,6 @@
     <div>
         <form method="post" class="layui-form" action="">
             <div class="layui-inline">
-
                 <div class="layui-input-inline">
                     <select name="vlan" lay-verify="required" lay-search="">
                         <option value="">选择或搜索网段</option>
@@ -14,10 +13,19 @@
                 </div>
                 <div class="layui-input-inline">
 
-                    <select name="app" lay-verify="required" lay-search="">
-                        <option value="">选择或搜索应用</option>
+                    <select name="app" lay-search="">
+                        <option value="">归属应用</option>
                         {% for k in groupinfo %}
-                            <option value="{{ k.name }}">{{ k.name }}</option>
+                            <option value="{{ k.id }}">{{ k.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="layui-input-inline">
+
+                    <select name="idc" lay-search="">
+                        <option value="">归属机房</option>
+                        {% for k in idcinfo %}
+                            <option value="{{ k.id }}">{{ k.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -30,25 +38,9 @@
 
     <script>
         layui.use('form', function () {
-            var form = layui.form, layer = layui.layer, $ = layui.$;
             form.on('submit(scan-scan)', function (data) {
-                var url = '/scan/'
-                $.ajax({
-                    type: 'POST',
-                    url: url,//发送请求
-                    async: false,
-                    data: data.field,//{param1: vlan, param2: app},
-                    success: function (resdata) {
-                        console.log(resdata.code)
-                        if (resdata.code == 0) {
-                            layer.msg(resdata.msg, {icon: 1});
-                            console.log(resdata.log);
-                        } else {
-                            layer.msg(resdata.msg, {icon: 2});
-                            console.log(resdata.log);
-                        }
-                    }
-                });
+                var url = '{% url "ops:scan" %}'
+                ajax_post(url, data.field)
                 return false; // 这段很关键
             });
         })

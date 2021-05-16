@@ -1,6 +1,12 @@
-{% extends 'base.html' %}
-{% block css-content %}
+{% load static %}
 
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>登录</title>
+    <link rel="stylesheet" href="{% static 'layui/css/layui.css' %}" media="all" type="text/css">
     <style type="text/css">
         .container {
             width: 420px;
@@ -27,15 +33,16 @@
         }
 
     </style>
-{% endblock css-content %}
-{% block content %}
-    <form class="layui-form" action="/login/" method="post">
+</head>
+<body>
+<div>
+    <form class="layui-form"  method="post"  id="login-form">
+        {% csrf_token %}
         <div class="container">
             <div class="layui-form-mid layui-word-aux">
                 <h1>Djops 登录</h1>
             </div>
             <div class="layui-form-item">
-
                 <label class="layui-form-label">用户：</label>
                 <div class="layui-input-block">
                     <input type="text" name="username" required lay-verify="required" placeholder="请输入用户名"
@@ -52,11 +59,13 @@
             </div>
             <div class="layui-form-item">
                 <div class="layui-input-block">
-                    <button class="layui-btn" lay-submit lay-filter="formDemo">登陆</button>
+                    <button class="layui-btn" lay-submit type="submit" lay-filter="login">登陆</button>
                 </div>
 
             </div>
-
         </div>
     </form>
-{% endblock content %}
+</div>
+<script type="text/javascript" src="{% static 'layui/layui.js' %}"></script>
+</body>
+</html>

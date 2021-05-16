@@ -14,37 +14,9 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path,re_path
+from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-]
-
-from management import views as mv
-from django.conf.urls import handler404, handler500
-
-
-urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('login/', mv.login),
-    path('logout/', mv.logout),
-    path('', mv.index),
-    path('assets/', mv.assets),
-    path('resinfo/', mv.resinfo),
-    path('hostupdate/', mv.hostupdate),
-    path('hostdel/',mv.hostdel),
-    path('scan/', mv.scan),
-    path('shell/', mv.shell),
-    path('runresult/', mv.runresult),
-    path('openresult/', mv.openresult),
-    path('rerun/', mv.rerun),
-    path('test/', mv.testhtml),
-
-
-    #path('api/hosts/', mv.HostView.as_view(actions={'get': 'retrieve', 'post': 'create'})),
-    path('api/results/', mv.ResultView.as_view(actions={'get':'list'})),
-    path('api/hosts/', mv.HostView.as_view(actions={'get': 'list'})),
-    re_path('api/hosts/(?P<pk>\d+)',
-            mv.HostView.as_view(actions={'get': 'retrieve','put':'update'})),
-
+    path('', include(('ops.urls', 'ops'), namespace='ops'))
 ]

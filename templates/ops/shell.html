@@ -78,11 +78,11 @@
                 layer.tips('温馨提示：开启则通过sudo 执行命令', data.othis)
             });
             form.on('submit(shell)', function (data) {
-                var url = '/shell/'
                 $.ajax({
                     type: 'POST',
-                    url: url,//发送请求
+                    url: {% url "ops:shell" %},//发送请求
                     async: false,
+                    headers:{'X-CSRFTOKEN': '{{ csrf_token }}'},
                     data: $("form[name=shell]").serialize(),//{param1: vlan, param2: app},
                     success: function (resdata) {
                         if (resdata.code == 0) {

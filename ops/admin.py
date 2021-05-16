@@ -1,6 +1,6 @@
 from django.contrib import admin
 import inspect
-from management import models
+from ops import models
 
 
 
@@ -46,12 +46,6 @@ class Vlaninfoadmin(admin.ModelAdmin):
     list_display = display
     search_fields = display
 
-
-@admin.register(models.HostType)
-class HostTypeoadmin(admin.ModelAdmin):
-    display = ['name']
-    list_display = display
-    search_fields = display
 
 # @admin.register(Osinfo)
 # class Osinfoadmin(admin.ModelAdmin):

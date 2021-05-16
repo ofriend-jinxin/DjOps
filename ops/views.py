@@ -1,31 +1,41 @@
+# django
+from django import forms
 from django.shortcuts import render
 from django.shortcuts import redirect
 from django.http import HttpResponseRedirect, JsonResponse
-from .models import *
+
+from django.views.generic.base import TemplateView, RedirectView, View
+from django.views.generic.edit import FormView
+from django.urls.base import reverse
+from django.utils.decorators import method_decorator
 from django.forms.models import model_to_dict
 from django.contrib.auth.models import auth
 from django.contrib.auth.decorators import login_required
-import json, ast
 from django_filters import rest_framework as filters
 
-from rest_framework.viewsets import ViewSet
-
-from management import models
-from management import appseries
+# rest_framework
 from rest_framework.response import Response
-from rest_framework import status
-import os
-from django_filters import Filter
+from rest_framework.viewsets import ViewSet
+from rest_framework.pagination import PageNumberPagination
+from ops.models import *
+# myproject
 from DjOps import settings
+from ops import models
+from ops import appseries
+# sys
+import os
+# celery
 from celery_tasks.tasks import RunAnsible, task_scan
 
-from rest_framework.pagination import PageNumberPagination
+import json, ast
 import logging
 
 logger = logging.getLogger('django')
 
 
 # Create your views here.
+
+############方法############
 def is_super_user(func):
     '''身份认证装饰器，
     :param func:
@@ -82,7 +92,7 @@ class HostFilter(filters.FilterSet):
     ip = filters.CharFilter(field_name='ip', lookup_expr=lookup_expr)
     sn = filters.CharFilter(field_name='sn', lookup_expr=lookup_expr)
     oobip = filters.CharFilter(field_name='oobip', lookup_expr=lookup_expr)
-    hosttype = filters.CharFilter(field_name='type__name', lookup_expr=lookup_expr)
+    hosttype = filters.CharFilter(field_name='type', lookup_expr=lookup_expr)
     app = filters.CharFilter(field_name='app__name', lookup_expr=lookup_expr)
     idc = filters.CharFilter(field_name='idc__name', lookup_expr=lookup_expr)
     vlan = filters.CharFilter(field_name='vlan__vlan_area', lookup_expr=lookup_expr)
@@ -101,7 +111,7 @@ class HostFilter_exact(filters.FilterSet):
     ip = filters.CharFilter(field_name='ip', lookup_expr=lookup_expr)
     sn = filters.CharFilter(field_name='sn', lookup_expr=lookup_expr)
     oobip = filters.CharFilter(field_name='oobip', lookup_expr=lookup_expr)
-    hosttype = filters.CharFilter(field_name='type__name', lookup_expr=lookup_expr)
+    hosttype = filters.CharFilter(field_name='type', lookup_expr=lookup_expr)
     app = filters.CharFilter(field_name='app__name', lookup_expr=lookup_expr)
     idc = filters.CharFilter(field_name='idc__name', lookup_expr=lookup_expr)
     vlan = filters.CharFilter(field_name='vlan__vlan_area', lookup_expr=lookup_expr)
@@ -110,6 +120,24 @@ class HostFilter_exact(filters.FilterSet):
         model = models.Hostinfo
         fields = ['ip', 'sn', 'oobip', 'hosttype', 'app', 'idc', 'vlan']
 
+
+class RunResultFilter(filters.FilterSet):
+    '''
+    定义一个IP字段的过滤器?ip=
+    lookup_expr gte >=,lte <=,icontains 模糊查询不区分大小写,exact 精准匹配
+    '''
+    lookup_expr = 'icontains'
+    ip = filters.CharFilter(field_name='ip', lookup_expr=lookup_expr)
+    ctype = filters.CharFilter(field_name='ctype',lookup_expr=lookup_expr)
+    state = filters.CharFilter(field_name='state',lookup_expr=lookup_expr)
+    # 开始时间
+    startdate = filters.DateTimeFilter(field_name='ctime', lookup_expr='gte')
+    # 结束时间
+    enddate = filters.DateTimeFilter(field_name='ctime', lookup_expr='lte')
+
+    class Meta:
+        model = models.RunResult
+        fields = ['ip', 'ctype','state','startdate','enddate']
 
 class CuseomPagination(PageNumberPagination):
     '''
@@ -133,17 +161,24 @@ def pagination_response(query_set, request, serializer):
     return pagination.get_paginated_response(data)
 
 
-def login(request):
-    '''
-    登录页
-    '''
-    next_url = request.GET.get('next')
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
+############视图############
+
+class LoginView(View):
+    """
+    登录视图
+    """
+
+    def get(self, request):
+        return render(self.request, 'login/login.html')
+
+    def post(self, request):
+        next_url = self.request.GET.get('next')
+        username = self.request.POST.get('username')
+        password = self.request.POST.get('password')
         user = auth.authenticate(username=username, password=password)
+        logger.error(next_url)
         if user:
-            auth.login(request, user)
+            auth.login(self.request, user)
             if next_url:
                 return redirect(next_url)
             else:
@@ -152,58 +187,115 @@ def login(request):
             message = '用户名或密码不正确！'
             return render(request, 'login/login.html', {'message': message})
 
-    return render(request, 'login/login.html')
+
+@method_decorator(is_super_user, 'get')  # 装饰get请求，写view就是全部。也可以卸载class中函数上方，第二个get参数就不用写了
+class IndexView(View):
+    """
+    主页视图
+    """
+
+    def get(self, request):
+        allmachine = Hostinfo.objects.all()
+        phymachine = Hostinfo.objects.all()
+        vmmachine = Hostinfo.objects.all()
+        groupnum = AppGroup.objects.all()
+        count = {"all": allmachine, "phy": phymachine, "vm": vmmachine, "group": groupnum}
+        return render(self.request, 'index.html', {'count': count})
 
 
-@login_required
-def index(request):
-    '''
-    主页
-    '''
-    allmachine = Hostinfo.objects.all().count()
-    phymachine = Hostinfo.objects.all().count()
-    vmmachine = Hostinfo.objects.all().count()
-    groupnum = AppGroup.objects.all().count()
-    count = {"all": allmachine, "phy": phymachine, "vm": vmmachine, "group": groupnum}
-    return render(request, 'index.html', {'count': count})
+@method_decorator(login_required, 'dispatch')
+class AssetsView(View):
+    """
+    主机资源页面
+    """
+
+    def get(self, request):
+        vlan = Vlaninfo.objects.all()
+        app = AppGroup.objects.all()
+        idc = Idc.objects.all()
+
+        hosttype = [
+            {'id': 1, 'name': '物理机'},
+            {'id': 2, 'name': '宿主机'},
+            {'id': 3, 'name': '虚拟机'}
+        ]
+        cabinet = Cabinet.objects.all
+        return_obj = {
+            'vlan': vlan,
+            'app': app,
+            'idc': idc,
+            'hosttype': hosttype,
+            'cabinet': cabinet,
+
+        }
+
+        return render(self.request, 'ops/assets.html', return_obj)
 
 
-@login_required
-def assets(request):
-    '''
-    查看资源页面
-    '''
-    vlan = Vlaninfo.objects.all()
-    app = AppGroup.objects.all()
-    idc = Idc.objects.all()
-    hosttype = HostType.objects.all()
-    cabinet = Cabinet.objects.all
-    return_obj = {
-        'vlan': vlan,
-        'app': app,
-        'idc': idc,
-        'hosttype': hosttype,
-        'cabinet': cabinet,
-
-    }
-    return render(request, 'management/assets.html', return_obj)
-
-
+@method_decorator(login_required, 'dispatch')
 class HostView(ViewSet):  # ViewSet
     '''
-    api/hosts/
+    api/hosts/ 获取主机资源接口
     '''
     filterset_class = HostFilter
 
     def list(self, request):
-        is_like = request.GET.get('is_like')
+        is_like = self.request.GET.get('is_like')
         hostinfo = models.Hostinfo.objects.all()
         if is_like == 'true':
-            filterset_class = HostFilter(request.GET, hostinfo)
+            filterset_class = HostFilter(self.request.GET, hostinfo)
         else:
-            filterset_class = HostFilter_exact(request.GET, hostinfo)
+            filterset_class = HostFilter_exact(self.request.GET, hostinfo)
+        return pagination_response(filterset_class.qs, self.request, appseries.HostinfoSerializer)
 
-        return pagination_response(filterset_class.qs, request, appseries.HostinfoSerializer)
+    @method_decorator(is_super_user)
+    def delete(self, request):
+        id = self.request.GET.get('id')
+        if ',' in id:
+            idlist = id.split(',')[:-1]
+        else:
+            idlist = [id]
+
+        try:
+            models.Hostinfo.objects.filter(id__in=idlist).delete()
+            return APIResponse(data=id, msg='删除成功')
+        except Exception as e:
+            return APIResponse(code=1, msg=e)
+
+    @method_decorator(is_super_user)
+    def update(self, request):
+        ip = self.request.GET.get('ip')
+
+        if ',' in ip:
+            iplist = str(ip).split(',')[:-1]
+        else:
+            iplist = [ip]
+        RunAnsible.delay(is_sudo='on', iplist=iplist, ctype='setup', args=None)
+        return APIResponse(msc='任务进入后台执行请稍等', log='任务进入后台执行请稍等', data=ip)
+
+
+@method_decorator(login_required, 'dispatch')
+class ScanView(View):
+    def get(self, request):
+        vlaninfo = Vlaninfo.objects.all()
+        groupinfo = AppGroup.objects.all()
+        idcinfo = Idc.objects.all()
+        return render(request, 'ops/scan.html', {'vlaninfo': vlaninfo, 'groupinfo': groupinfo, 'idcinfo': idcinfo})
+
+    @method_decorator(is_super_user)
+    def post(self, request):
+        vlan = self.request.POST.get('vlan')
+        app_id = self.request.POST.get('app')
+        idc_id = self.request.POST.get('idc')
+        vlanobj = Vlaninfo.objects.filter(vlan_net=vlan).first()
+
+        if vlanobj:
+            info = "scan : {} {} {} {}".format(vlan, app_id, vlanobj.id,idc_id)
+            logger.info(info)
+            task_scan.delay(vlan, app_id, vlanobj.id,idc_id)
+            return APIJsonResponse(data=str(vlanobj))
+        else:
+            return APIJsonResponse(code=1, data='参数错误')
 
 
 @login_required
@@ -219,21 +311,21 @@ def resinfo(request):
     if request.method == 'GET':
         osid = request.GET.get('osid')
         try:
-            os_info = Hostinfo.objects.get(id=osid)
+            os_info = Hostinfo.objects.filger(id=osid)
             os_info = model_to_dict(os_info)
             groupinfo = AppGroup.objects.all()
             vlaninfo = Vlaninfo.objects.all()
             app = AppGroup.objects.get(id=os_info['app']).name
-            print('666')
-            return render(request, 'management/resinfo.html',
+
+            return render(request, 'ops/resinfo.html',
                           {'osinfo': os_info, 'os_group': app, 'thepage': thepage, 'groupinfo': groupinfo,
                            'vlaninfo': vlaninfo})
         except Exception as e:
-            print(e)
+            logger.error(e)
             return HttpResponseRedirect(last_html)
     elif request.method == 'POST':
         try:
-            print(request.POST)
+            logger.info(request.POST)
             id_num = request.POST.get('id_num')
             vlan = request.POST.get('vlan')
             mem = request.POST.get('mem')
@@ -261,58 +353,8 @@ def resinfo(request):
 
             return redirect('/resinfo/?osid={}'.format(id_num))
         except Exception as e:
-            print(e, '----')
+            logger.error(e)
             return HttpResponseRedirect(last_html)
-
-
-@login_required
-@is_super_user
-def hostupdate(request):
-    '''
-    更新主机接口，调用Ansible 执行set模块
-    '''
-    ip = request.GET.get('ip')
-    if ip != '':
-        iplist = str(ip).split(',')
-        print(iplist)
-        RunAnsible.delay(is_sudo='on', iplist=iplist[:-1], ctype='setup', args=None)
-        return APIJsonResponse(data='任务进入后台执行请稍等', log='666')
-
-
-@login_required  # 登录
-@is_super_user  # root
-def hostdel(request):
-    '''
-    删除主机
-    '''
-    ip = request.GET.get('ip')
-    try:
-        Hostinfo.objects.filter(ip=ip).delete()
-        return APIJsonResponse(data='操作成功')
-    except Exception as e:
-        return APIJsonResponse(code=1, data='操作失败', log=e)
-
-
-@login_required
-@is_super_user
-def scan(request):
-    '''
-    扫描网段，等待重写异步执行。
-    '''
-    if request.method == 'POST':
-        vlan = request.POST.get('vlan')
-        app = request.POST.get('app')
-        print(request.POST)
-        vlanobj = Vlaninfo.objects.get(vlan_net=vlan)
-        print(vlanobj)
-        if vlanobj:
-            task_scan.delay(vlan, app, vlanobj.id)
-            return APIJsonResponse(data='扫描任务开始')
-        else:
-            return APIJsonResponse(code=1, data='执行错误')
-    vlaninfo = Vlaninfo.objects.all()
-    groupinfo = AppGroup.objects.all()
-    return render(request, 'management/scan.html', {'vlaninfo': vlaninfo, 'groupinfo': groupinfo, })
 
 
 def get_sh_file(fdir, fstr):
@@ -373,7 +415,7 @@ def shell(request):
         fileList = get_sh_file("/shell", '.sh')
     elif ctype == 'playbook':
         fileList = get_sh_file("/playbook", '.yml')
-    return render(request, 'management/shell.html',
+    return render(request, 'ops/shell.html',
                   {'filelist': fileList, 'iplist': iplist, 'shell_res': shell_res, 'run_type': ctype})
 
 
@@ -381,11 +423,10 @@ class ResultView(ViewSet):
     '''
     执行结果
     '''
-    filterset_class = HostFilter()
-
+    filterset_class = RunResultFilter()
     def list(self, request):
         RsultInfo = models.RunResult.objects.all()
-        filterset_class = HostFilter(request.GET, RsultInfo)
+        filterset_class = RunResultFilter(request.GET, RsultInfo)
         return pagination_response(filterset_class.qs, request, appseries.RunResultSerializer)
 
 
@@ -397,7 +438,17 @@ def runresult(request):
         for id in str(delid).split(',')[:-1]:
             models.RunResult.objects.get(id=id).delete()
         return APIJsonResponse(data='操作成功')
-    return render(request, 'management/runresult.html')
+    states = [
+        {'id': 1, 'name': '执行中'},
+        {'id': 2, 'name': '异常'},
+        {'id': 3, 'name': '完成'}
+    ]
+    ctypes=['shell','playbook','scan','script']
+    result_obj = {
+        'state': states,
+        'ctype':ctypes,
+    }
+    return render(request, 'ops/runresult.html',result_obj)
 
 
 @login_required
@@ -407,12 +458,12 @@ def openresult(request):
     if id:
         obj = models.RunResult.objects.get(id=id)
         result_txt = obj.result_txt
-        if '任务正在执行中' in result_txt or '任务执行完成' in result_txt:
-            types = 'str'
-        else:
-            types = 'list'
+        try:
             result_txt = ast.literal_eval(result_txt)
-        return render(request, 'management/openresult.html', {'result': result_txt, 'types': types})
+            types='list'
+        except Exception as e:
+            types='str'
+        return render(request, 'ops/openresult.html', {'result': result_txt, 'types': types})
 
 
 @login_required

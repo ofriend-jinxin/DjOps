@@ -22,7 +22,7 @@
                     <i class="layui-icon layui-icon-spread-left"></i>
                 </li>
                 <li class="layui-nav-item layui-hide-xs"><a href="/">首页</a></li>
-                <li class="layui-nav-item layui-hide-xs"><a href="/assets">查看资源</a></li>
+                <li class="layui-nav-item layui-hide-xs"><a href="/assets/">查看资源</a></li>
             </ul>
             <ul class="layui-nav layui-layout-right">
                 <li class="layui-nav-item layui-hide layui-show-md-inline-block">
@@ -43,7 +43,6 @@
                 </li>
             </ul>
         </div>
-
         <div class="layui-side layui-bg-black">
             <div class="layui-side-scroll">
                 <!-- 左侧导航区域（可配合layui已有的垂直导航） -->
@@ -72,7 +71,7 @@
 
         <div class="layui-body">
             <!-- 内容主体区域 -->
-            <div style="padding: 30px;">{% block content %}{% endblock content %}</div>
+            <div style="margin: 15px;margin-bottom: 50px;">{% block content %}{% endblock content %}</div>
         </div>
 
         <div class="layui-footer">
@@ -82,15 +81,91 @@
     </div>
 {% endblock %}
 <script type="text/javascript" src="{% static 'layui/layui.js' %}"></script>
-{% block js-content %}
-
-{% endblock %}
 
 <script>
+    var form = layui.form, layer = layui.layer, table = layui.table, element = layui.element, util = layui.util,
+        $ = layui.$;
+    var headers = {'X-CSRFTOKEN': '{{ csrf_token }}'}
+    var ajax_get = function (url) {
+        $.ajax({
+            type: 'get',
+            url: url,
+            async: false,
+            success: function (resdata) {
+                if (resdata.code == 0) {
+                    layer.msg(resdata.msg, {icon: 1});
+                    console.log(resdata.log);
+                } else {
+                    layer.msg(resdata.msg, {icon: 2});
+                    console.log(resdata.log);
+                }
+            }
+        });
+    }
+    var ajax_put = function (url) {
+        $.ajax({
+            type: 'put',
+            url: url,
+            async: false,
+            headers: headers,
+            success: function (resdata) {
+                if (resdata.code == 0) {
+                    layer.msg(resdata.msg, {icon: 1});
+                    console.log(resdata.log);
+                } else {
+                    layer.msg(resdata.msg, {icon: 2});
+                    console.log(resdata.log);
+                }
+            }
+        });
+    }
+    var ajax_del = function (url) {
+        $.ajax({
+            type: 'delete',
+            url: url,
+            async: false,
+            headers: headers,
+            success: function (resdata) {
+                if (resdata.code == 0) {
+                    layer.msg(resdata.msg, {icon: 1});
+                    console.log(resdata.log);
+                } else {
+                    layer.msg(resdata.msg, {icon: 2});
+                    console.log(resdata.log);
+                }
+            }
+        });
+    }
+    var ajax_post = function (url, data) {
+        $.ajax({
+            type: 'POST',
+            url: url,//发送请求
+            async: false,
+            headers: {'X-CSRFTOKEN': '{{ csrf_token }}'},
+            data: data,//{param1: vlan, param2: app},
+            success: function (resdata) {
+                console.log(resdata.code)
+                if (resdata.code == 0) {
+                    layer.msg(resdata.msg, {icon: 1});
+                    console.log(resdata.log);
+                } else {
+                    layer.msg(resdata.msg, {icon: 2});
+                    console.log(resdata.log);
+                }
+            }
+        });
+
+
+    }
+</script>
+<script>
     layui.use(['form', 'layedit', 'laydate'], function () {
-        var form = layui.form, layer = layui.layer,element = layui.element, util = layui.util, $ = layui.$;
-
-
+        $('.layui-nav-child dd  a').each(function () {
+            if ($(this)[0].href == String(window.location)) {
+                $(this).parent().css({"background": "#009688", "color": "#ffffff"})
+                $(this).css({"color": "#ffffff"})
+            }
+        });
         //头部事件
         util.event('lay-header-event', {
             //左侧菜单事件
@@ -98,11 +173,9 @@
                 layer.msg('展开左侧菜单的操作', {icon: 0});
             }
         });
-
-
-
     })
 </script>
-
+{% block js-content %}
+{% endblock %}
 </body>
 </html>

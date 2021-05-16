@@ -8,7 +8,10 @@ from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.plugins.callback import CallbackBase
 from ansible import context
+from ansible.utils.vars import load_extra_vars
+from ansible.utils.vars import load_options_vars
 import ansible.constants as C
+import datetime
 
 
 class ResultCallback(CallbackBase):
@@ -44,7 +47,7 @@ class MyAnsiable():
                  verbosity=3,
                  syntax=None,
                  start_at_task=None,
-                 forks=50,
+                 forks=200,
                  poll_interval=15,
                  port=None,
                  iplist=None, ):  # inventory iplist
@@ -53,6 +56,7 @@ class MyAnsiable():
         初始化函数，定义的默认的选项值，
         在初始化的时候可以传参，以便覆盖默认选项的值
         """
+        C.HOST_KEY_CHECKING = False
         context.CLIARGS = ImmutableDict(
             connection=connection,
             remote_user=remote_user,
@@ -71,31 +75,32 @@ class MyAnsiable():
             diff=diff,
             poll_interval=poll_interval,
             start_at_task=start_at_task,
-            timeout=5,  # ssh超时时间
-
+            timeout=1,  # ssh超时时间
         )
 
         # 实例化数据解析器
         self.loader = DataLoader()
         # 实例化 资产配置对象
-        # self.inv_obj = InventoryManager(loader=self.loader, sources=self.inventory)
-        self.inv_obj = InventoryManager(loader=self.loader)
+        # self.iplist = ",".join(iplist) + ","
+        # self.inventory = InventoryManager(loader=self.loader, sources=self.iplist)
+        self.inventory = InventoryManager(loader=self.loader)
         for ip in iplist:
-            self.inv_obj.add_host(host=ip, group='all', port=port)
-            # 设置密码
+            self.inventory.add_host(host=ip, group='all', port=port)
+        # 设置密码
         self.passwords = remote_password
 
         # 实例化回调插件对象
         self.results_callback = ResultCallback()
 
         # 变量管理器
-        self.variable_manager = VariableManager(self.loader, self.inv_obj)
+        self.variable_manager = VariableManager(self.loader, self.inventory)
 
     def run(self, gether_facts="no", module="ping", args='', task_time=0):
         """
         参数说明：
         task_time -- 执行异步任务时等待的秒数，这个需要大于 0 ，等于 0 的时候不支持异步（默认值）。这个值应该等于执行任务实际耗时时间为好
         """
+        print(module,args)
         play_source = dict(
             name="Ansible play",
             hosts='all',
@@ -111,11 +116,13 @@ class MyAnsiable():
         tqm = None
         try:
             tqm = TaskQueueManager(
-                inventory=self.inv_obj,
+                inventory=self.inventory,
                 variable_manager=self.variable_manager,
                 loader=self.loader,
                 passwords=self.passwords,
-                stdout_callback=self.results_callback)
+                stdout_callback=self.results_callback,
+                forks=context.CLIARGS.get('forks')
+            )
             tqm.run(play)
         finally:
             if tqm is not None:
@@ -129,7 +136,7 @@ class MyAnsiable():
         """
 
         playbook = PlaybookExecutor(playbooks=[playbooks],
-                                    inventory=self.inv_obj,
+                                    inventory=self.inventory,
                                     variable_manager=self.variable_manager,
                                     loader=self.loader,
                                     passwords=self.passwords)
@@ -149,10 +156,13 @@ class MyAnsiable():
 
 
 if __name__ == '__main__':
-    hostlist = ['192.168.101.12', '192.168.101.18']
+    hostlist = []
+    for i in range(10, 100):
+        hostlist.append("{}{}".format('192.168.101.', i))
     ans = MyAnsiable(iplist=hostlist, remote_user='root', become='yes', port='22',
                      remote_password={"conn_pass": '123456'})
-    ans.run(module='script', args='/Users/jinxin/PycharmProjects/DjOps/DjOps/localfile/shell/ls_root.sh')
-    # print(ans.get_result())
-    # ans.playbook(playbooks='/opt/a.yml')
-    print(ans.get_result())
+
+    ans.run(module='script', args='/ls_root.sh')
+    ans.run(module='shell', args='netstat -ntlp')
+    ans.playbook(playbooks='/test.yml') #用时：04.744813
+

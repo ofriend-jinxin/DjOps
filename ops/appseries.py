@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from management import models
+from ops import models
 import datetime
 
 
@@ -26,13 +26,6 @@ class IdcSerializer(serializers.Serializer):
 class CabinetSerializer(serializers.Serializer):
     id = serializers.IntegerField(required=False, read_only=True)
     name = serializers.CharField(required=False)
-    idc = IdcSerializer()
-
-
-# 设备类型
-class HostTypeSerializer(serializers.Serializer):
-    id = serializers.IntegerField(required=False, read_only=True)
-    name = serializers.CharField(required=False)
 
 
 # 机器表
@@ -49,7 +42,7 @@ class HostinfoSerializer(serializers.ModelSerializer):
     app = AppGroupSerializer(required=False)
     vlan = VlaninfoSerializer(required=False)
     cabinet = CabinetSerializer(required=False)
-    type = HostTypeSerializer(required=False)
+    type = serializers.IntegerField(required=False)
     u = serializers.CharField(required=False)
     oobip = serializers.CharField(required=False)
     mac = serializers.CharField(required=False)
@@ -76,6 +69,7 @@ class RunResultSerializer(serializers.ModelSerializer):
     ctype = serializers.CharField(required=False, read_only=True)
     args = serializers.CharField(required=False, read_only=True)
     is_sudo = serializers.CharField(required=False, read_only=True)
+    state = serializers.IntegerField(required=False, read_only=True)
     result_txt = serializers.CharField(required=False, read_only=True)
 
     class Meta:

@@ -1,11 +1,10 @@
 from __future__ import absolute_import, unicode_literals
 from celery_tasks.celery import app
-
+import datetime,logging
 from DjOps import settings
 from DjOps.tools.Ansible2 import *
 from DjOps.tools.Scan import Scan
-from management import models
-import logging
+from ops import models
 
 ssh_info = settings.SSH_INFO
 ssh_user = ssh_info['SSH_USER']
@@ -17,20 +16,22 @@ logger = logging.getLogger('django')
 
 @app.task
 def RunAnsible(is_sudo, iplist, args, ctype, id=False):
+    start = datetime.datetime.now()
     if is_sudo == 'on':
         become = 'yes'
     else:
         become = None
         is_sudo = 'off'
     if id:
-        task_obj = models.RunResult.objects.get(id=id)
+        task_obj = models.RunResult.objects.filter(id=id).first()
         task_obj.result_txt = ('任务正在执行中，请稍后刷新再试，如长时间未返回，请重新执行')
-        task_obj.save()
+        task_obj.state=1
 
     else:
-        task_obj = models.RunResult.objects.create(is_sudo=is_sudo, num=len(iplist),ip=",".join(iplist), ctype=ctype,
+        task_obj = models.RunResult(is_sudo=is_sudo, num=len(iplist), ip=",".join(iplist), ctype=ctype,
                                                    args=str(args),
-                                                   result_txt='任务正在执行中，请稍后刷新再试，如长时间未返回，请重新执行')
+                                                   result_txt='任务正在执行中，请稍后刷新再试，如长时间未返回，请重新执行',state=1)
+    task_obj.save()
     ans = MyAnsiable(iplist=iplist, remote_user=ssh_user, become=become, port=ssh_port,
                      remote_password={"conn_pass": ssh_pass})
 
@@ -104,50 +105,75 @@ def RunAnsible(is_sudo, iplist, args, ctype, id=False):
                     result_setup += 'failed：{}:{}'.format(ip, failed.get(ip)) + "\r\n"
 
                 task_obj.result_txt = '任务执行完成' + "\r\n" + result_setup
+                task_obj.state=3
 
-                task_obj.save()
-            return 'done'
         except Exception as e:
-            logger.error(e)
+            task_obj.result_txt=e
+            task_obj.state=2
     else:
-        for i in iplist:
-            resdic = {}
-            resstr = ''
-            resdic['resstr'] = ""
-            cmdstr = "{} $: {}\n".format(i, args)
-            resdic['cmdstr'] = cmdstr
-            if success.get(i):
-                resstr += str(success.get(i)['stdout']) + "\n"
-                resdic['resstr'] += resstr
-            if unreachable.get(i):
-                resstr += str(unreachable.get(i)['msg']) + "\n"
-                resdic['resstr'] += resstr
-            if failed.get(i):
-                resstr += str(failed.get(i)['msg']) + "\n"
-                resdic['resstr'] += resstr
-            result.append(resdic)
-        task_obj.result_txt = result
-        task_obj.save()
-        return 'run done'
+        try:
+            for i in iplist:
+                resdic = {}
+                resstr = ''
+                resdic['resstr'] = ""
+                cmdstr = "{} $: {}\n".format(i, args)
+                resdic['cmdstr'] = cmdstr
+                if success.get(i):
+                    resstr += str(success.get(i)['stdout']) + "\n"
+                    resdic['resstr'] += resstr
+                if unreachable.get(i):
+                    resstr += str(unreachable.get(i)['msg']) + "\n"
+                    resdic['resstr'] += resstr
+                if failed.get(i):
+                    resstr += str(failed.get(i)['msg']) + "\n"
+                    resdic['resstr'] += resstr
+                result.append(resdic)
+            task_obj.result_txt = result
+            task_obj.state=2
+        except Exception as e:
+            task_obj.result_txt = e
+            task_obj.state=3
 
+    end = datetime.datetime.now()
+    usetime = float((end - start).total_seconds())
+    task_obj.ustime = usetime
+    task_obj.save()
+    return "run ansible done"
 
 @app.task
-def task_scan(vlan, group,vlan_id):
-    task_obj = models.RunResult.objects.create(is_sudo='None', ip=vlan, ctype='scan',
-                                               args='None',
-                                               result_txt='任务正在执行中，请稍后刷新再试，如长时间未返回，请重新执行')
-    # 启动扫描程序
-    s = Scan()
-    s.run(vlan=vlan, port=ssh_port)
-    hosts_list = s.ips
-    for ip in hosts_list:
-        groupobj = models.AppGroup.objects.get(name=group)
-        if not models.Hostinfo.objects.filter(ip=ip):
-            models.Hostinfo.objects.create(ip=ip, vlan_id=vlan_id, app=groupobj)
-        else:
-            addos = models.Hostinfo.objects.get(ip=ip)
-            addos.vlan_id = vlan_id
-            addos.app = groupobj
-            addos.save()
+def task_scan(vlan, group_id, vlan_id,idc_id):
+    start = datetime.datetime.now()
+    task_obj = models.RunResult(is_sudo='None', ip=vlan, ctype='scan',
+                                args='None',
+                                result_txt='任务正在执行中，请稍后刷新再试，如长时间未返回，请重新执行',state=1)
+    task_obj.save()
 
-    task_obj.result_txt='扫描完成'
+    # 启动扫描程序
+    try:
+        s = Scan()
+        s.run(vlan=vlan, port=ssh_port)
+        hosts_list = s.ips
+        for ip in hosts_list:
+            if not models.Hostinfo.objects.filter(ip=ip).first():
+                hostobj = models.Hostinfo(ip=ip, vlan_id=vlan_id, app_id=group_id,idc_id=idc_id)
+                hostobj.save()
+            else:
+                addos = models.Hostinfo.objects.filter(ip=ip).first()
+                addos.vlan_id = vlan_id
+                addos.app_id = group_id
+                addos.idc_id = idc_id
+                addos.save()
+        logger.info(hosts_list)
+        logger.info(len(hosts_list))
+        task_obj.result_txt = '扫描完成:'+ str(hosts_list)
+        task_obj.num=len(hosts_list)
+        task_obj.state=3
+    except Exception as e:
+        task_obj.result_txt = e
+        task_obj.state=2
+        logger.error(e)
+    end = datetime.datetime.now()
+    usetime = float((end - start).total_seconds())
+    task_obj.ustime = usetime
+    task_obj.save()
+    return 'run scan done'

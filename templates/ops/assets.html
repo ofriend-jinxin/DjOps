@@ -32,8 +32,8 @@
                                 <div class="layui-input-inline">
                                     <select id="search_type" lay-search="">
                                         <option value="">搜索选择</option>
-                                        {% for name in hosttype %}
-                                            <option value="{{ name }}">{{ name }}</option>
+                                        {% for type in hosttype %}
+                                            <option value="{{ type.id }}">{{ type.name }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
@@ -100,11 +100,12 @@
     <script type="text/html" id="toolbarDemo">
         <div class="layui-btn-container">
 
-            <button class="layui-btn layui-btn-sm" lay-event="update">更新</button>
+            <button class="layui-btn layui-btn-sm" lay-event="update">更新主机信息</button>
             <button class="layui-btn layui-btn-sm" lay-event="isAll">验证是否全选</button>
             <button class="layui-btn layui-btn-sm" lay-event="shell">执行命令</button>
             <button class="layui-btn layui-btn-sm" lay-event="script">执行脚本</button>
             <button class="layui-btn layui-btn-sm" lay-event="playbook">playbook</button>
+            <button class="layui-btn layui-btn-sm layui-btn-danger" lay-event="delete">批量删除</button>
         </div>
     </script>
 
@@ -115,10 +116,14 @@
     <script>
 
         layui.use('table', function () {
-            var table = layui.table, layer = layui.layer, $ = layui.$;
+            HOSTTYPE_CHOICES = {
+                1: '<em style="color:orange">' + '物理机' + '<em>',
+                2: '<em style="color:darkorange">' + '宿主机' + '<em>',
+                3: '<em style="color:forestgreen">' + '虚拟机' + '<em>',
+            }
             table.render({
                 elem: '#assets'
-                , url: '/api/hosts/'
+                , url: '{% url "ops:api-hosts" %}'
                 , toolbar: '#toolbarDemo' //开启头部工具栏，并为其绑定左侧模板
 
                 , defaultToolbar: ['filter', 'exports', 'print', { //自定义头部工具栏右侧图标。如无需自定义，去除该参数即可
@@ -134,23 +139,47 @@
                     , {field: 'sn', title: 'SN', sort: true, width: 100,}
                     , {field: 'oobip', title: '带外IP', sort: true, width: 140,}
                     , {
+                        field: 'type', title: '主机类型', sort: true, width: 140, templet: function (res) {
+                            var hosttype = HOSTTYPE_CHOICES[res.type]
+                            if(typeof (hosttype) != 'undefined'){
+                                return hosttype
+                            }
+                            return ''
+                        }
+                    }
+                    , {
                         field: 'app', title: '应用', width: 100, sort: true, templet: function (res) {
-                            return '<em>' + res.app.name + '</em>'
+                            if( res.app != null){
+                                return '<em>' + res.app.name + '</em>'
+                            }
+                            return ''
+
                         }
                     }
                     , {
                         field: 'vlan', title: '环境', width: 100, sort: true, templet: function (res) {
-                            return '<em>' + res.vlan.vlan_area + '</em>'
+                            if( res.vlan != null){
+                                return '<em>' + res.vlan.vlan_area + '</em>'
+                            }
+                            return ''
+
                         }
                     }
                     , {
-                        field: 'cabinet', title: '机房', width: 100, sort: true, hide: true, templet: function (res) {
-                            return '<em>' + res.cabinet.idc.name + '</em>'
+                        field: 'idc', title: '机房', width: 100, sort: true, hide: true, templet: function (res) {
+                            if( res.idc != null){
+                                return '<em>' + res.idc.name + '</em>'
+                            }
+                            return ''
                         }
                     }
                     , {
                         field: 'cabinet', title: '机柜', width: 100, sort: true, hide: true, templet: function (res) {
-                            return '<em>' + res.cabinet.name + '</em>'
+                            if( res.cabinet != null){
+                                return '<em>' + res.cabinet.id.name + '</em>'
+                            }
+                            return ''
+
                         }
                     }
                     , {field: 'u', title: 'U位', sort: true, width: 70,}
@@ -165,15 +194,18 @@
                     , {fixed: 'right', title: '操作', toolbar: '#barDemo', width: 150,}
                 ]]
                 , page: true
+                , limits:[20,40,60,80,100,200,1000]
                 , id: 'tabReload'
             });
             //头工具栏事件
             table.on('toolbar(assets)', function (obj) {
                 var checkStatus = table.checkStatus(obj.config.id);
                 var iplist = ''
+                var idlist = ''
                 var data = checkStatus.data;
                 for (var item in data) {
                     iplist += data[item].ip + ",";
+                    idlist += data[item].id + ",";
                 }
                 if (data.length != 0) {
                     switch (obj.event) {
@@ -190,31 +222,28 @@
                                 content: [url, 'on'],
                                 btn: ['关闭'],
                             })
-
-
                             break;
-                        case 'update':
-                            //layer.alert(JSON.stringify(iplist));
-                            var url = '/hostupdate/?ip=' + iplist
-                            layer.confirm('更新操作', {
+                        case 'delete' :
+                            var url = "{% url "ops:api-hosts" %}?id=" + idlist
+                            layer.confirm('确认删除', {
                                 btn: ['确认', '取消']
                             }, function () {
                                 // 按钮1的事件
-                                $.ajax({
-                                    type: "get",
-                                    url: url,
-                                    async: false,
-                                    success: function (resdata) {
-                                        if (resdata.code == 0) {
-                                            layer.msg(resdata.msg, {icon: 1});
-                                            console.log(resdata.log);
-                                            window.setTimeout("javascript:location.href='/runresult/'", 1000);
-                                        } else {
-                                            layer.msg(resdata.msg, {icon: 2});
-                                            console.log(resdata.log);
-                                        }
-                                    }
-                                });
+                                ajax_del(url)
+                                window.location.reload();
+                                return false; // 这段很关键
+
+                            }, function (index) {
+                                // 按钮2的事件
+                                layer.close(index);
+                            });
+                            break;
+                        case 'update':
+                            //layer.alert(JSON.stringify(iplist));
+                            layer.confirm('更新操作', {
+                                btn: ['确认', '取消']
+                            }, function () {
+                                ajax_put("{% url "ops:api-hosts"%}?ip=" + iplist)
                                 return false; // 这段很关键
                             }, function (index) {
                                 // 按钮2的事件
@@ -244,47 +273,43 @@
             //监听行单击事件（双击事件为：rowDouble）
             table.on('row(assets)', function (obj) {
                 var data = obj.data;
-                console.log(obj.data)
+                //console.log(obj.data)
 
             });
 
             //监听行工具事件
             table.on('tool(assets)', function (obj) {
                 var data = obj.data;
-                if (obj.event == 'del') {
-                    var url = '/hostdel?ip=' + data.ip
-                    boxmsg = "确认删除"
-                } else if (obj.event == 'update') {
-                    var url = '/hostupdate/?ip=' + data.ip
-                    boxmsg = "确认更新"
+                switch (obj.event) {
+                    case 'del' :
+                        var url = "{% url "ops:api-hosts" %}?id=" + data.id
+                        layer.confirm('确认删除', {
+                            btn: ['确认', '取消']
+                        }, function () {
+                            // 按钮1的事件
+                            ajax_del(url)
+                            obj.del()
+                            return false; // 这段很关键
 
+                        }, function (index) {
+                            // 按钮2的事件
+                            layer.close(index);
+                        });
+                        break;
+                    case 'update':
+                        layer.confirm('确认更新', {
+                            btn: ['确认', '取消']
+                        }, function () {
+                            // 按钮1的事件
+                            ajax_put("{% url "ops:api-hosts" %}?ip=" + data.ip)
+                            return false; // 这段很关键
+                        }, function (index) {
+                            // 按钮2的事件
+                            layer.close(index);
+                        });
+                        break
                 }
-                layer.confirm(boxmsg, {
-                    btn: ['确认', '取消']
-                }, function () {
-                    // 按钮1的事件
-                    $.ajax({
-                        type: "get",
-                        url: url,
-                        async: false,
-                        success: function (resdata) {
-                            if (resdata.code == 0) {
-                                layer.msg(resdata.msg, {icon: 1});
-                                console.log(resdata.log);
-                                window.setTimeout("javascript:location.href='/assets/'", 1500);
-                            } else {
-                                layer.msg(resdata.msg, {icon: 2});
-                                console.log(resdata.log);
-                            }
-                        }
-                    });
-                    return false; // 这段很关键
-                }, function (index) {
-                    // 按钮2的事件
-                    layer.close(index);
-                });
-
-            });
+            })
             var active = {
                 reload: function () {
                     var search_ip = $('#search_ip');
@@ -314,7 +339,8 @@
                     return false;
                 }
             };
-            $('.demoTable .layui-btn').on('click', function () {
+            $('.demoTable .layui-btn'
+            ).on('click', function () {
                 var type = $(this).data('type');
                 active[type] ? active[type].call(this) : '';
             });

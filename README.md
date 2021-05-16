@@ -1,13 +1,13 @@
-# DjOps 说明
+## DjOps 说明
 * 主机管理系统，底层调用ansible，不支持windows
 * 个人日常闲着没事儿干写的，代码乱七八糟。。希望有大神可以指教改进。
 * Python版本： 3.9.2，前端用的layer，测试python3.6 也可以使用
-* 目前实现的功能
+* 主要的的功能
   * 1 主机信息录入和更新 (调用ansible setup 模块)
   * 2 执行shell命令（调用ansible shell模块
   * 3 执行shell脚本（调用ansible script模块）
 
-# 启动
+## 启动
 ```
 # 拉代码
 git clone https://github.com/ofriend-jinxin/DjOps.git
@@ -17,17 +17,16 @@ pip install  -r requirements.txt
 # 初始化数据库
 python manage.py  makemigrations
 python manage.py migrate
-python manage.py shell
 # 生成默认的测试数据
 python manage.py shell
-    from django.contrib.auth.models import User
-    User.objects.create_superuser("admin", "admin@admin.com", "admin")
-    from management.models import AppGroup,Vlaninfo,Idc,Cabinet,HostType
-    AppGroup.objects.create(name='默认应用')
-    Idc.objects.create(name='默认机房',address='默认地址',phone='10010',email='admin@admin.com')
-    Cabinet.objects.create(name='001',idc_id=1)
-    Vlaninfo.objects.create(vlan_net='192.168.0.1/24',vlan_area='测试')
-    HostType.objects.create(name='虚拟机')
+from django.contrib.auth.models import User
+User.objects.create_superuser("admin", "admin@admin.com", "admin")
+from ops.models import *
+AppGroup.objects.create(name='默认应用')
+Idc.objects.create(name='默认机房',address='默认地址',phone='10010',email='admin@admin.com')
+Cabinet.objects.create(name='001',idc_id=1)
+Vlaninfo.objects.create(vlan_net='192.168.0.0/24',vlan_area='测试')
+exit()
 # 运行django
 python manage.py runserver
 # 运行celery
@@ -51,3 +50,7 @@ celery -A celery_tasks.celery  worker -B -l info --beat
 * templates模板调整（乱调一通，反正能用）
 * 优化扫描网段前端展示及记录
 * 新增主机查询过滤器
+
+## 2021、5、16 更新
+* 优化ansible fork 设置默认为200
+* 优化调整静态文件，执行结果查询过滤
