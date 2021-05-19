@@ -6,8 +6,8 @@
                 <div class="layui-input-inline">
                     <select name="vlan" lay-verify="required" lay-search="">
                         <option value="">选择或搜索网段</option>
-                        {% for key in vlaninfo %}
-                            <option value="{{ key.vlan_net }}">{{ key.vlan_net }}</option>
+                        {% for v in vlaninfo %}
+                            <option value="{{ v.vnet }}">{{ v.vnet }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -15,8 +15,8 @@
 
                     <select name="app" lay-search="">
                         <option value="">归属应用</option>
-                        {% for k in groupinfo %}
-                            <option value="{{ k.id }}">{{ k.name }}</option>
+                        {% for a in appinfo %}
+                            <option value="{{ a.id }}">{{ a.aname }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -24,8 +24,8 @@
 
                     <select name="idc" lay-search="">
                         <option value="">归属机房</option>
-                        {% for k in idcinfo %}
-                            <option value="{{ k.id }}">{{ k.name }}</option>
+                        {% for i in idcinfo %}
+                            <option value="{{ i.id }}">{{ i.iname }}</option>
                         {% endfor %}
                     </select>
                 </div>

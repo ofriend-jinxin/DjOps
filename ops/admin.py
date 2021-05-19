@@ -5,22 +5,22 @@ from ops import models
 
 
 # 找出模块里所有的类名
-@admin.register(models.RunResult)
-class RunResult(admin.ModelAdmin):
-    display = ['id']
-    list_display = display
-    search_fields = display
+# @admin.register(models.RunResult)
+# class RunResult(admin.ModelAdmin):
+#     display = ['id']
+#     list_display = display
+#     search_fields = display
 
 @admin.register(models.Cabinet)
 class Cabinetadmin(admin.ModelAdmin):
-    display = ['name']
+    display = ['cname']
     list_display = display
     search_fields = display
 
 
 @admin.register(models.Idc)
 class Idcadmin(admin.ModelAdmin):
-    display = ['name']
+    display = ['iname']
     list_display = display
     search_fields = display
 
@@ -33,16 +33,16 @@ class Hostoadmin(admin.ModelAdmin):
     search_fields = display
 
 
-@admin.register(models.AppGroup)
+@admin.register(models.App)
 class AppGroupadmin(admin.ModelAdmin):
-    display = ['name']
+    display = ['aname']
     list_display = display
     search_fields = display
 
 
-@admin.register(models.Vlaninfo)
+@admin.register(models.Vlan)
 class Vlaninfoadmin(admin.ModelAdmin):
-    display = ['vlan_area', 'vlan_net']
+    display = ['varea', 'vnet']
     list_display = display
     search_fields = display
 

@@ -38,9 +38,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'ops.apps.ManagementConfig',
     'rest_framework',
     'django_filters',
+    'django_celery_results', #查看celery执行结果
+    'django_celery_beat',
+    'ops'
 ]
 
 MIDDLEWARE = [
@@ -142,11 +144,6 @@ REST_FRAMEWORK = {
         'django_filters.rest_framework.DjangoFilterBackend',
     )
 }
-SSH_INFO = {
-    'SSH_PORT': '22',
-    'SSH_USER': 'root',
-    'SSH_PASS': '123456',
-}
 
 # 配置log#  log  首先创建日志存储路径.
 log_path = os.path.join(BASE_DIR, "logs")
@@ -185,7 +182,7 @@ LOGGING = {
         'default': {  # 默认的
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',  # 保存到文件，自动切
-            'filename': os.path.join(log_path, "all.log"),  # 日志文件
+            'filename': os.path.join(log_path, "ops_all.log"),  # 日志文件
             'maxBytes': 1024 * 1024 * 50,  # 日志大小 50M
             'backupCount': 3,  # 最多备份几个
             'formatter': 'standard',
@@ -194,7 +191,7 @@ LOGGING = {
         'error': {  # 专门用来记错误日志
             'level': 'ERROR',
             'class': 'logging.handlers.RotatingFileHandler',  # 保存到文件，自动切
-            'filename': os.path.join(log_path, "error.log"),  # 日志文件
+            'filename': os.path.join(log_path, "ops_error.log"),  # 日志文件
             'maxBytes': 1024 * 1024 * 50,  # 日志大小 50M
             'backupCount': 5,
             'formatter': 'standard',
@@ -208,4 +205,11 @@ LOGGING = {
             'propagate': True,  # 向不向更高级别的logger传递
         },
     },
+}
+
+
+SSH_INFO = {
+    'SSH_PORT': '22',
+    'SSH_USER': 'root',
+    'SSH_PASS': '123456',
 }

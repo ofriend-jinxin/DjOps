@@ -12,7 +12,7 @@ class Scan:
         self.lock = threading.Lock()
 
     # 定义查询路由函数
-    def run(self,vlan,port):
+    def run(self, vlan, port):
         # 存放线程列表池
         self.IPylist = IPy.IP(vlan)
         all_threads = []
@@ -32,7 +32,7 @@ class Scan:
         # 创建TCP套接字，链接新的ip列表
         scan_link = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # 设置链接超时时间
-        scan_link.settimeout(0.1)
+        scan_link.settimeout(3)
         # 链接地址(通过指定我们 构造的主机地址，和扫描指定端口)
         result = scan_link.connect_ex((new_ip, port))
         #
@@ -41,19 +41,17 @@ class Scan:
         # 判断链接结果
         if result == 0:
             # 加锁
-            #print(result,new_ip,port)
+            # print(result,new_ip,port)
             self.lock.acquire()
             self.ips.append(new_ip)
             # 释放锁
             self.lock.release()
 
 
-
 # 启动程序入口
 if __name__ == '__main__':
     # 启动扫描程序
-    s=Scan()
+    s = Scan()
     print('开始扫描')
-    s.run(vlan='154.92.19.0/24',port=22)
-    print(len(s.ips),s.ips)
-
+    s.run(vlan='192.168.0.0/24', port=22)
+    print(len(s.ips), s.ips)

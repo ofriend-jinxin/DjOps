@@ -1,5 +1,11 @@
 {% extends 'base.html' %}
 
 {% block content %}
-这里是主页{{ count }}
+<h2>机器总数：{{ count.all }}</h2>
+<h2>物理机：{{ count.hosts }}</h2>
+<h2>宿主机：{{ count.phys }}</h2>
+<h2>虚拟机：{{ count.vms }}</h2>
+<h2>应用：{{ count.apps }}</h2>
+
+
 {% endblock %}

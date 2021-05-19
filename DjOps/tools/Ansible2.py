@@ -75,7 +75,7 @@ class MyAnsiable():
             diff=diff,
             poll_interval=poll_interval,
             start_at_task=start_at_task,
-            timeout=1,  # ssh超时时间
+            timeout=10,  # ssh超时时间
         )
 
         # 实例化数据解析器
@@ -100,7 +100,6 @@ class MyAnsiable():
         参数说明：
         task_time -- 执行异步任务时等待的秒数，这个需要大于 0 ，等于 0 的时候不支持异步（默认值）。这个值应该等于执行任务实际耗时时间为好
         """
-        print(module,args)
         play_source = dict(
             name="Ansible play",
             hosts='all',
@@ -159,10 +158,13 @@ if __name__ == '__main__':
     hostlist = []
     for i in range(10, 100):
         hostlist.append("{}{}".format('192.168.101.', i))
+
+    hostlist = ['1.1.1.1']
     ans = MyAnsiable(iplist=hostlist, remote_user='root', become='yes', port='22',
                      remote_password={"conn_pass": '123456'})
 
-    ans.run(module='script', args='/ls_root.sh')
-    ans.run(module='shell', args='netstat -ntlp')
-    ans.playbook(playbooks='/test.yml') #用时：04.744813
-
+    # ans.run(module='script', args='/ls_root.sh')
+    # ans.run(module='shell', args='netstat -ntlp')
+    ans.run(module='setup')
+    print(ans.get_result())
+    # ans.playbook(playbooks='/test.yml') #用时：04.744813

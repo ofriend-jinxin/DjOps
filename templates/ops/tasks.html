@@ -10,15 +10,15 @@
                     <div class="demoTable">
                         <div class="layui-form-item">
                             <div class="layui-inline">
-                                <label class="layui-form-label">IP：</label>
+                                <label class="layui-form-label">任务ID：</label>
                                 <div class="layui-input-inline">
-                                    <input class="layui-input" id="search_ip" autocomplete="off">
+                                    <input class="layui-input" id="search_id" autocomplete="off">
                                 </div>
                             </div>
                             <div class="layui-inline">
                                 <label class="layui-form-label">任务类型</label>
                                 <div class="layui-input-inline">
-                                    <select id="search_type" lay-search="">
+                                    <select id="search_args" lay-search="">
                                         <option value="">搜索选择</option>
                                         {% for c in ctype %}
                                             <option value="{{ c }}">{{ c }}</option>
@@ -29,10 +29,10 @@
                             <div class="layui-inline">
                                 <label class="layui-form-label">任务状态</label>
                                 <div class="layui-input-inline">
-                                    <select id="search_state" lay-search="">
+                                    <select id="search_status" lay-search="">
                                         <option value="">搜索选择</option>
                                         {% for s in state %}
-                                            <option value="{{ s.id }}">{{ s.name }}</option>
+                                            <option value="{{ s.0 }}">{{ s.1 }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
@@ -53,16 +53,17 @@
                                             </div>
                                         </div>
                                     </div>
+                                    <a class="layui-btn layui-btn-primary layui-btn-big" data-type="reload">搜索</a>
                                 </div>
                             </div>
                         </div>
-                        <a class="layui-btn layui-btn-primary layui-btn-big" data-type="reload">搜索</a>
+
                     </div>
                 </div>
             </div>
         </div>
     </form>
-    <table class="layui-hide" id="runresult" lay-filter="runresult"></table>
+    <table class="layui-hide" id="task_result" lay-filter="task_result"></table>
 
 
 {% endblock content %}
@@ -86,7 +87,7 @@
             //日期范围
             laydate.render({
                 elem: '#resultdate'
-                ,type: 'datetime'
+                , type: 'datetime'
                 //设置开始日期、日期日期的 input 选择器
                 //数组格式为 2.6.6 开始新增，之前版本直接配置 true 或任意分割字符即可
                 , range: ['#startDate', '#endDate']
@@ -100,8 +101,8 @@
                 3: '<em style="color:lightseagreen">' + '完成' + '<em>',
             }
             table.render({
-                elem: '#runresult'
-                , url: '/api/results/'
+                elem: '#task_result'
+                , url: "{% url "ops:api-tasks" %}"
                 , toolbar: '#toolbarDemo' //开启头部工具栏，并为其绑定左侧模板
 
                 , defaultToolbar: ['filter', 'exports', 'print', { //自定义头部工具栏右侧图标。如无需自定义，去除该参数即可
@@ -111,62 +112,71 @@
                 }]
                 , cols: [[
                     {type: 'checkbox', fixed: 'left', sort: true, id: 'goodsLimitSeqNo'}
-                    , {field: 'id', title: 'id', fixed: 'left', unresize: true, width: 60}
-                    , {field: 'ip', title: 'IP', width: 300}
-                    , {field: 'num', title: 'IP数量', width: 100,}
-                    , {field: 'ctype', title: '任务类型', width: 110,}
-                    , {field: 'args', title: '任务参数', width: 200,}
-                    , {field: 'is_sudo', title: 'sudo', width: 100,}
+                    , {field: 'id', title: 'ID', fixed: 'left', unresize: true, width: 60}
+                    , {field: 'task_id', title: '任务ID', width: 300}
+                    , {field: 'task_name', title: '任务名称', width: 200,}
+                    , {field: 'task_kwargs', title: '任务参数', width: 200,}
+                    , {field: 'status', title: '任务状态', width: 100,}
+                    , {field: 'date_created', title: '任务创建时间', width: 200,}
+                    , {field: 'date_done', title: '任务完成时间', width: 200,}
+                    , {field: 'result', title: '结果', width: 100,}
+                    , {fixed: 'right', title: '操作', toolbar: '#barDemo', width: 200,}
 
-                    , {
-                        field: 'state', title: '任务状态', width: 100, templet: function (res) {
-                            return STATE_CHOICE[res.state]
-                        }
-                    }
-                    , {field: 'ustime', title: '用时（秒）', width: 100,}
-                    , {field: 'ctime', title: '任务更新时间', sort: true, width: 200,}
-                    , {fixed: 'right', title: '操作', toolbar: '#barDemo', width: 200}
                 ]]
-                , initSort: {
-                    field: 'ctime',
-                    type: 'desc'
-                }
+                //, initSort: {
+                //    field: 'ctime',
+                //    type: 'desc'
+                // }
                 , page: true
                 , id: 'tabReload'
             });
-            //监听行工具事件
-            table.on('tool(runresult)', function (obj) {
-                    var data = obj.data;
-                    if (obj.event == 'open') {
-                        var url = '{%  url "ops:openresult"  %}?id=' + data.id
-                        layer.open({
-                            type: 2,
-                            title: "执行结果",
-                            shadeClose: true,
-                            maxmin: true,
-                            area: ['90%', '90%'],
-                            content: [url, 'on'],
-                            btn: ['关闭'],
-                        })
+                      //监听行双击击事件（双击事件为：row ）
+            table.on('rowDouble(task_result)', function (obj) {
 
-                    } else if (obj.event == 'rerun') {
-                        layer.confirm('重新执行', {
-                            btn: ['确认', '取消']
-                        }, function () {
-                            // 按钮1的事件
-                            ajax_post({% url "ops:rerun" %}, {"id": data.id})
-                            return false;
-                        }, function (index) {
-                            // 按钮2的事件
-                            layer.close(index);
-                        });
-                    }
+                if (obj.tr.find('.layui-form-checkbox').hasClass('layui-form-checked'))
+                    obj.tr.find('.layui-form-checkbox').removeClass('layui-form-checked');
 
+                else
+                    obj.tr.find('.layui-form-checkbox').addClass('layui-form-checked');
+
+                var checkCell = obj.tr.find("td div.laytable-cell-checkbox div.layui-form-checkbox I");
+                console.log(checkCell.length)
+                if (checkCell.length > 0) {
+                    checkCell.click();
                 }
-            );
+            });
+            //监听行工具事件
+            table.on('tool(task_result)', function (obj) {
+                var data = obj.data;
+                if (obj.event == 'open') {
+                    layer.open({
+                        type: 1,
+                        title: "任务：" + data.task_id,
+                        shadeClose: true,
+                        maxmin: true,
+                        area: ['90%', '90%'],
+                        btn: ['关闭'],
+                        skin: 'yourclass',
+                        content: data.result
+                    });
+                } else if (obj.event == 'rerun') {
+                    layer.confirm('重新执行', {
+                        btn: ['确认', '取消']
+                    }, function () {
+                        // 按钮1的事件
+                        console.log(data.id)
+                        var url = "{% url "ops:api-tasks" %}"
+                        ajax_post(url, {"id": data.id})
+                    }, function (index) {
+                        // 按钮2的事件
+                        layer.close(index)
+                    })
+                }
+
+            });
 
 
-            table.on('toolbar(runresult)', function (obj) {
+            table.on('toolbar(task_result)', function (obj) {
                 var checkStatus = table.checkStatus(obj.config.id);
                 var data = checkStatus.data;
                 var idlist = ''
@@ -181,7 +191,7 @@
                             }, function () {
                                 // 按钮1的事件
                                 layer.msg("确认操作，请耐心等待");
-                                ajax_del("{% url 'ops:runresult' %}?delid=" + idlist)
+                                ajax_del("{% url 'ops:api-tasks' %}?id=" + idlist)
                                 window.location.reload();
                             }, function (index) {
                                 // 按钮2的事件
@@ -201,9 +211,9 @@
             })
             var active = {
                 reload: function () {
-                    var search_ip = $('#search_ip');
-                    var search_type = $('#search_type');
-                    var search_state = $('#search_state');
+                    var search_id = $('#search_id');
+                    var search_kwargs = $('#search_args');
+                    var search_status = $('#search_status');
                     var startDate = $('#startDate');
                     var endDate = $('#endDate');
                     table.reload('tabReload', {
@@ -211,11 +221,11 @@
                             curr: 1
                         }
                         , where: {
-                            ip: search_ip.val(),
-                            ctype: search_type.val(),
-                            state: search_state.val(),
-                            startdate: startDate.val(),
-                            enddate: endDate.val(),
+                            task_id: search_id.val(),
+                            task_kwargs: search_kwargs.val(),
+                            status: search_status.val(),
+                            date_created: startDate.val(),
+                            date_done: endDate.val(),
 
                         }
                     });

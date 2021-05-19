@@ -22,7 +22,7 @@
                     <i class="layui-icon layui-icon-spread-left"></i>
                 </li>
                 <li class="layui-nav-item layui-hide-xs"><a href="/">首页</a></li>
-                <li class="layui-nav-item layui-hide-xs"><a href="/assets/">查看资源</a></li>
+                <li class="layui-nav-item layui-hide-xs"><a href="{% url "ops:assets" %}">查看资源</a></li>
             </ul>
             <ul class="layui-nav layui-layout-right">
                 <li class="layui-nav-item layui-hide layui-show-md-inline-block">
@@ -50,21 +50,12 @@
                     <li class="layui-nav-item layui-nav-itemed">
                         <a class="" href="javascript:;">资源管理</a>
                         <dl class="layui-nav-child">
-                            <dd><a href="/assets/">查看资源</a></dd>
-                            <dd><a href="/scan/">扫描网段</a></dd>
-                            <dd><a href="/runresult/">执行结果查询</a></dd>
-                        </dl>
-                    </li>
-                    <li class="layui-nav-item">
-                        <a href="javascript:;">menu group 2</a>
-                        <dl class="layui-nav-child">
+                            <dd><a href="{% url "ops:assets" %}">查看资源</a></dd>
+                            <dd><a href="{% url "ops:scan" %}">扫描网段</a></dd>
+                            <dd><a href="{% url "ops:runlog" %}">执行结果查询</a></dd>
                             <dd><a href="javascript:;">list 1</a></dd>
-                            <dd><a href="javascript:;">list 2</a></dd>
-                            <dd><a href="">超链接</a></dd>
                         </dl>
                     </li>
-                    <li class="layui-nav-item"><a href="javascript:;">click menu item</a></li>
-                    <li class="layui-nav-item"><a href="">the links</a></li>
                 </ul>
             </div>
         </div>

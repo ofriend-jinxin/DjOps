@@ -80,9 +80,9 @@
             form.on('submit(shell)', function (data) {
                 $.ajax({
                     type: 'POST',
-                    url: {% url "ops:shell" %},//发送请求
+                    url: {% url "ops:action" %},//发送请求
                     async: false,
-                    headers:{'X-CSRFTOKEN': '{{ csrf_token }}'},
+                    headers: {'X-CSRFTOKEN': '{{ csrf_token }}'},
                     data: $("form[name=shell]").serialize(),//{param1: vlan, param2: app},
                     success: function (resdata) {
                         if (resdata.code == 0) {

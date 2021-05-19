@@ -32,8 +32,8 @@
                                 <div class="layui-input-inline">
                                     <select id="search_type" lay-search="">
                                         <option value="">搜索选择</option>
-                                        {% for type in hosttype %}
-                                            <option value="{{ type.id }}">{{ type.name }}</option>
+                                        {% for h in htype %}
+                                            <option value="{{ h.id }}">{{ h.hname }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
@@ -43,8 +43,8 @@
                                 <div class="layui-input-inline">
                                     <select id="search_app" lay-search="">
                                         <option value="">搜索选择</option>
-                                        {% for name in app %}
-                                            <option value="{{ name }}">{{ name }}</option>
+                                        {% for a in app %}
+                                            <option value="{{ a.id }}">{{ a.aname }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
@@ -57,15 +57,14 @@
                             </div>
 
                         </div>
-
                         <div class="layui-form-item">
                             <div class="layui-inline">
                                 <label class="layui-form-label">机房</label>
                                 <div class="layui-input-inline">
                                     <select id="search_idc" lay-search="">
                                         <option value="">搜索选择</option>
-                                        {% for name in idc %}
-                                            <option value="{{ name }}">{{ name }}</option>
+                                        {% for i in idc %}
+                                            <option value="{{ i.id }}">{{ i.iname }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
@@ -75,8 +74,8 @@
                                 <div class="layui-input-inline">
                                     <select id="search_vlan" lay-search="">
                                         <option value="">搜索选择</option>
-                                        {% for name in vlan %}
-                                            <option value="{{ name.vlan_area }}">{{ name.vlan_area }}</option>
+                                        {% for v in vlan %}
+                                            <option value="{{ v.id }}">{{ v.varea }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
@@ -117,7 +116,7 @@
 
         layui.use('table', function () {
             HOSTTYPE_CHOICES = {
-                1: '<em style="color:orange">' + '物理机' + '<em>',
+                1: '<em style="color:orangered">' + '物理机' + '<em>',
                 2: '<em style="color:darkorange">' + '宿主机' + '<em>',
                 3: '<em style="color:forestgreen">' + '虚拟机' + '<em>',
             }
@@ -125,7 +124,7 @@
                 elem: '#assets'
                 , url: '{% url "ops:api-hosts" %}'
                 , toolbar: '#toolbarDemo' //开启头部工具栏，并为其绑定左侧模板
-
+                , limit: 20
                 , defaultToolbar: ['filter', 'exports', 'print', { //自定义头部工具栏右侧图标。如无需自定义，去除该参数即可
                     title: '提示'
                     , layEvent: 'LAYTABLE_TIPS'
@@ -133,68 +132,74 @@
                 }]
                 , cols: [[
                     {type: 'checkbox', fixed: 'left', id: 'goodsLimitSeqNo'}
-                    , {field: 'id', title: 'ID', fixed: 'left', unresize: true, sort: true, width: 70, event}
-                    , {field: 'ip', title: 'IP', width: 140, sort: true}
-                    , {field: 'hostname', title: '主机名', width: 140, sort: true}
-                    , {field: 'sn', title: 'SN', sort: true, width: 100,}
-                    , {field: 'oobip', title: '带外IP', sort: true, width: 140,}
+                    , {field: 'id', title: 'ID', fixed: 'left', unresize: true, sort: true, width: 70}
+
+                    , {field: 'hip', title: 'IP', width: 140,}
+                    , {field: 'hhostname', title: '主机名', width: 140, sort: true}
+                    , {field: 'hsn', title: 'SN', width: 100,}
+                    , {field: 'hoobip', title: '带外IP', width: 140, edit: 'text'}
                     , {
-                        field: 'type', title: '主机类型', sort: true, width: 140, templet: function (res) {
-                            var hosttype = HOSTTYPE_CHOICES[res.type]
-                            if(typeof (hosttype) != 'undefined'){
+                        field: 'htype', title: '主机类型', sort: true, width: 140, templet: function (res) {
+                            var hosttype = HOSTTYPE_CHOICES[res.htype]
+                            if (typeof (hosttype) != 'undefined') {
                                 return hosttype
                             }
                             return ''
                         }
                     }
                     , {
-                        field: 'app', title: '应用', width: 100, sort: true, templet: function (res) {
-                            if( res.app != null){
-                                return '<em>' + res.app.name + '</em>'
+                        field: 'happ', title: '应用', width: 100, sort: true, templet: function (res) {
+                            if (res.happ != null) {
+                                return '<em>' + res.happ.aname + '</em>'
                             }
                             return ''
 
                         }
                     }
                     , {
-                        field: 'vlan', title: '环境', width: 100, sort: true, templet: function (res) {
-                            if( res.vlan != null){
-                                return '<em>' + res.vlan.vlan_area + '</em>'
+                        field: 'hvlan', title: '环境', width: 100, sort: true, templet: function (res) {
+                            if (res.hvlan != null) {
+                                return '<em>' + res.hvlan.varea + '</em>'
                             }
                             return ''
 
                         }
                     }
                     , {
-                        field: 'idc', title: '机房', width: 100, sort: true, hide: true, templet: function (res) {
-                            if( res.idc != null){
-                                return '<em>' + res.idc.name + '</em>'
+                        field: 'hidc', title: '机房', width: 100, sort: true, hide: true, templet: function (res) {
+                            if (res.hidc != null) {
+                                return '<em>' + res.hidc.iname + '</em>'
                             }
                             return ''
                         }
                     }
                     , {
-                        field: 'cabinet', title: '机柜', width: 100, sort: true, hide: true, templet: function (res) {
-                            if( res.cabinet != null){
-                                return '<em>' + res.cabinet.id.name + '</em>'
+                        field: 'hcabinet', title: '机柜', width: 100, sort: true, hide: true, templet: function (res) {
+                            if (res.hcabinet != null) {
+                                return '<em>' + res.hcabinet.cname + '</em>'
                             }
                             return ''
 
                         }
                     }
-                    , {field: 'u', title: 'U位', sort: true, width: 70,}
-                    , {field: 'cpu', title: 'cpu型号', sort: true, hide: true}
-                    , {field: 'vcpu', title: 'cpu', sort: true, width: 70,}
-                    , {field: 'mem', title: '内存M', sort: true, width: 100,}
-                    , {field: 'disk', title: '硬盘G', sort: true, width: 100,}
-                    , {field: 'notes', title: '备注信息', sort: true, hide: true}
-                    , {field: 'kernel', title: '内核版本', sort: true, hide: true}
-                    , {field: 'system', title: '系统版本', sort: true, width: 120}
-                    , {field: 'exceedtime', title: '到期时间', sort: true, width: 200,}
+                    , {field: 'hu', title: 'U位', width: 70, edit: 'text'}
+
+                    , {field: 'hvcpu', title: 'cpu', width: 70,}
+                    , {field: 'hmem', title: '内存M', width: 100,}
+                    , {field: 'hdisk', title: '硬盘G', width: 100,}
+
+                    , {field: 'hsystem', title: '系统版本', width: 150}
+                    , {field: 'hproduct_name', title: '机器型号', width: 120}
+                    , {field: 'hsystem_vendor', title: '设备型号', width: 120}
+                    , {field: 'hcpu', title: 'cpu型号', width: 250, hide: true}
+                    , {field: 'hbios_vendor', title: 'bios厂商', width: 250, hide: true}
+                    , {field: 'hkernel', title: '内核版本', width: 150, hide: true}
+                    , {field: 'hexceedtime', title: '到期时间', sort: true, width: 200,}
+                    , {field: 'hnotes', title: '备注信息', width: 300, hide: true, edit: 'text'}
                     , {fixed: 'right', title: '操作', toolbar: '#barDemo', width: 150,}
                 ]]
                 , page: true
-                , limits:[20,40,60,80,100,200,1000]
+                , limits: [20, 40, 60, 80, 100, 200, 1000]
                 , id: 'tabReload'
             });
             //头工具栏事件
@@ -204,7 +209,7 @@
                 var idlist = ''
                 var data = checkStatus.data;
                 for (var item in data) {
-                    iplist += data[item].ip + ",";
+                    iplist += data[item].hip + ",";
                     idlist += data[item].id + ",";
                 }
                 if (data.length != 0) {
@@ -212,7 +217,7 @@
                         case 'shell' :
                         case 'script' :
                         case 'playbook':
-                            var url = '/shell?ip=' + iplist + "&type=" + obj.event
+                            var url = '{% url 'ops:action' %}?ip=' + iplist + "&type=" + obj.event
                             layer.open({
                                 type: 2,
                                 title: "执行" + obj.event,
@@ -230,7 +235,8 @@
                             }, function () {
                                 // 按钮1的事件
                                 ajax_del(url)
-                                window.location.reload();
+                                // window.location.reload();
+                                active.reload()
                                 return false; // 这段很关键
 
                             }, function (index) {
@@ -243,7 +249,7 @@
                             layer.confirm('更新操作', {
                                 btn: ['确认', '取消']
                             }, function () {
-                                ajax_put("{% url "ops:api-hosts"%}?ip=" + iplist)
+                                ajax_put("{% url "ops:action"%}?ip=" + iplist)
                                 return false; // 这段很关键
                             }, function (index) {
                                 // 按钮2的事件
@@ -270,11 +276,20 @@
                 }
             })
             ;
-            //监听行单击事件（双击事件为：rowDouble）
-            table.on('row(assets)', function (obj) {
-                var data = obj.data;
-                //console.log(obj.data)
+            //监听行双击击事件（双击事件为：row ）
+            table.on('rowDouble(assets)', function (obj) {
 
+                if (obj.tr.find('.layui-form-checkbox').hasClass('layui-form-checked'))
+                    obj.tr.find('.layui-form-checkbox').removeClass('layui-form-checked');
+
+                else
+                    obj.tr.find('.layui-form-checkbox').addClass('layui-form-checked');
+
+                var checkCell = obj.tr.find("td div.laytable-cell-checkbox div.layui-form-checkbox I");
+                console.log(checkCell.length)
+                if (checkCell.length > 0) {
+                    checkCell.click();
+                }
             });
 
             //监听行工具事件
@@ -297,17 +312,12 @@
                         });
                         break;
                     case 'update':
-                        layer.confirm('确认更新', {
-                            btn: ['确认', '取消']
-                        }, function () {
-                            // 按钮1的事件
-                            ajax_put("{% url "ops:api-hosts" %}?ip=" + data.ip)
-                            return false; // 这段很关键
-                        }, function (index) {
-                            // 按钮2的事件
-                            layer.close(index);
-                        });
-                        break
+
+                        console.log(JSON.stringify(data))
+                        // console.log(data.serialize())
+                        ajax_put("{% url "ops:api-hosts" %}?id=" + data.id + "&data=" + JSON.stringify(data))
+                        return false; // 这段很关键
+
                 }
             })
             var active = {
@@ -325,13 +335,13 @@
                             curr: 1
                         }
                         , where: {
-                            ip: search_ip.val(),
-                            sn: search_sn.val(),
-                            oobip: search_oobip.val(),
-                            hosttype: search_type.val(),
-                            app: search_app.val(),
-                            idc: search_idc.val(),
-                            vlan: search_vlan.val(),
+                            hip: search_ip.val(),
+                            hsn: search_sn.val(),
+                            hoobip: search_oobip.val(),
+                            htype: search_type.val(),
+                            happ: search_app.val(),
+                            hidc: search_idc.val(),
+                            hvlan: search_vlan.val(),
                             is_like: is_like.is(":checked"),
 
                         }

@@ -8,7 +8,7 @@
   * 3 执行shell脚本（调用ansible script模块）
 
 ## 启动
-```
+```python
 # 拉代码
 git clone https://github.com/ofriend-jinxin/DjOps.git
 cd DjOps
@@ -22,21 +22,24 @@ python manage.py shell
 from django.contrib.auth.models import User
 User.objects.create_superuser("admin", "admin@admin.com", "admin")
 from ops.models import *
-AppGroup.objects.create(name='默认应用')
-Idc.objects.create(name='默认机房',address='默认地址',phone='10010',email='admin@admin.com')
-Cabinet.objects.create(name='001',idc_id=1)
-Vlaninfo.objects.create(vlan_net='192.168.0.0/24',vlan_area='测试')
+App.objects.create(aname='默认应用')
+Idc.objects.create(iname='默认机房',iaddress='默认地址',iphone='10010',iemail='admin@admin.com')
+Cabinet.objects.create(cname='001',cidc_id=1)
+Vlan.objects.create(vnet='192.168.0.0/24',varea='测试')
 exit()
 # 运行django
 python manage.py runserver
 # 运行celery
 export PYTHONOPTIMIZE=1 
-celery -A celery_tasks.celery  worker -B -l info --beat
+celery -A DjOps  worker  --loglevel=info 
+celery -A DjOps   beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
 
 ```
 
 * 目前还有好多问题。比如异步执行动作，页面样式等。慢慢来吧~
 ![image](https://user-images.githubusercontent.com/28593701/118287152-c0db6600-b505-11eb-9b9f-a07c3fd6bd49.png)
+![image](https://user-images.githubusercontent.com/28593701/118388837-66531e80-b659-11eb-9937-24c53d57f766.png)
+
 
 ## 2021、5、10 更新
 * 去掉nmap。重新写了个scan扫描端口
@@ -54,3 +57,8 @@ celery -A celery_tasks.celery  worker -B -l info --beat
 ## 2021、5、16 更新
 * 优化ansible fork 设置默认为200
 * 优化调整静态文件，执行结果查询过滤
+
+## 2021、5、19 更新
+* 增加django-celery-beat  django-celery-results 支持后台设置定时任务
+* 重写查看结果页面，使用django-celery-results
+

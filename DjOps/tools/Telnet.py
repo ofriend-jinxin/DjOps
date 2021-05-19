@@ -42,6 +42,6 @@ if __name__ == '__main__':
     # 启动扫描程序
     t=Telnet()
     print('开始扫描')
-    t.run(vlan='154.92.19.0/24',port=22)
+    t.run(vlan='192.168.0.0/24',port=22)
     print(len(t.ips),t.ips)
 
